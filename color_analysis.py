@@ -13,7 +13,6 @@ Point = namedtuple('Point', ('coords', 'n', 'ct'))
 Cluster = namedtuple('Cluster', ('points', 'center', 'n'))
 
 
-
 def get_points(image):
     points = []
     w, h = image.size
@@ -26,7 +25,11 @@ def analyze_color(image, n=3):
     points = get_points(image)
     clusters = k_means(points, n, 1)
     colors = [map(int, c.center.coords) for c in clusters]
-    return map(to_hex, colors)
+
+    result = []
+    for color in colors:
+        result.append(rgb_to_hex(color))
+    return result
 
 
 def euclidean(p1, p2):
