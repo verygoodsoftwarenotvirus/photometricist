@@ -1,0 +1,20 @@
+{
+  "source_file": "products.csv",
+  "save_as": "output.csv",
+  "photos": {
+        "photo_link_column": "image_url",
+        "photos_directory": "product_photos"
+  },
+  "colors": {
+    "red": {
+      "start": "#FF0000",
+      "finish": "#C83232"
+    }, "blue": {
+      "start": "#0000FF",
+      "finish": "#3232C8"
+    },"green": {
+      "start": "#00FF00",
+      "finish": "#32C832"
+    }
+  }
+}
