@@ -8,7 +8,6 @@ from webcolors import rgb_to_hex, hex_to_rgb
      http://charlesleifer.com/blog/using-python-and-k-means-to-find-the-dominant-colors-in-images/
 """
 
-
 Point = namedtuple('Point', ('coords', 'n', 'ct'))
 Cluster = namedtuple('Cluster', ('points', 'center', 'n'))
 
@@ -72,3 +71,24 @@ def k_means(points, k, min_diff):
             break
 
     return clusters
+
+
+"""
+    Everything beyond here is my own code
+"""
+
+
+def color_is_in_range(to_compare, color_range):
+    to_compare = hex_to_rgb(to_compare)
+    floor_color, ceiling_color = color_range
+    floor_color = hex_to_rgb(floor_color)
+    ceiling_color = hex_to_rgb(ceiling_color)
+
+    for color_value in to_compare:
+        index = to_compare.index(color_value)
+        floor_value = min(floor_color[index], ceiling_color[index])
+        ceiling_value = max(floor_color[index], ceiling_color[index])
+        if not floor_value < color_value < ceiling_value:
+            return False
+
+    return True
