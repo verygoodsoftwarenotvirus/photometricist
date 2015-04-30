@@ -1,7 +1,7 @@
 from collections import namedtuple
 from math import sqrt
 import random
-from PIL import Image
+from webcolors import rgb_to_hex, hex_to_rgb
 
 """
     Modified from
@@ -11,24 +11,19 @@ from PIL import Image
 
 Point = namedtuple('Point', ('coords', 'n', 'ct'))
 Cluster = namedtuple('Cluster', ('points', 'center', 'n'))
-to_hex = lambda rgb: '#%s' % ''.join(('%02x' % p for p in rgb))
 
 
-def get_points(img):
+
+def get_points(image):
     points = []
-    w, h = img.size
-    for count, color in img.getcolors(w * h):
+    w, h = image.size
+    for count, color in image.getcolors(w * h):
         points.append(Point(color, 3, count))
     return points
 
 
-def create_photo_thumbnail(filename):
-    img = Image.open(filename)
-    return img.thumbnail((200, 200))
-
-
-def analyze_color(img, n=3):
-    points = get_points(img)
+def analyze_color(image, n=3):
+    points = get_points(image)
     clusters = k_means(points, n, 1)
     colors = [map(int, c.center.coords) for c in clusters]
     return map(to_hex, colors)

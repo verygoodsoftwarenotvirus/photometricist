@@ -1,11 +1,13 @@
 {
-  "source_file": "products.csv",
-  "save_as": "output.csv",
-  "photos": {
-        "photo_link_column": "image_url",
-        "photos_directory": "product_photos"
-  },
-  "colors": {
+  "file": {
+    "source_file": "before_color.csv",
+    "save_as": "output.csv",
+    "photo_info_column": "image_url"
+  }, "photos": {
+        "base_photo_dir": "product_photos",
+        "cropped_photo_dir": "cropped_photos",
+        "crop_percentage": 75
+  }, "colors": {
     "red": {
       "start": "#FF0000",
       "finish": "#C83232"

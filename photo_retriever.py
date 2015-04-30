@@ -1,11 +1,6 @@
 import csv
+import time
 import requests
-
-
-args = {"source_file": "before_color.csv",
-        "save_as": "after_color.csv",
-        "photo_link_column": "image_url",
-        "photo_directory": "saved_files"}
 
 
 def retrieve_photos(photo_url, target_file_name):
@@ -15,14 +10,13 @@ def retrieve_photos(photo_url, target_file_name):
             f.write(chunk)
 
 
-def process_file(filename):
-    with open(args["source_file"], "r") as source, open(args["save_as"], "w") as new_file:
+def process_file(filename, photo_column, destination_folder=time.time()):
+    with open(filename, "r") as source:
         reader = csv.DictReader(source)
         fieldnames = reader.fieldnames
         fieldnames.append("computed_color")
-        writer = csv.DictWriter(new_file, fieldnames)
         for row in reader:
-            photo_link = row[args["photo_link_column"]]
-            photo_file_name = args["photo_directory"] + photo_link[photo_link.rfind("/"):photo_link.rfind("?")]
+            photo_link = row[photo_column]
+            photo_file_name = destination_folder + photo_link[photo_link.rfind("/"):photo_link.rfind("?")]
             retrieve_photos(photo_link, photo_file_name)
 
