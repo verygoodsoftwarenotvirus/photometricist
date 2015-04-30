@@ -18,6 +18,7 @@ def main():
     source_file = config["file"]["source_file"]
     save_as = config["file"]["save_as"]
     photo_column = config["file"]["photo_info_column"]
+    cropped_images_are_to_be_saved = config["photos"]["save_cropped_photos"]
     cropped_folder = config["photos"]["cropped_photo_dir"]
     photo_destination_folder = config["photos"]["base_photo_dir"]
     crop_percentage = config["photos"]["crop_percentage"]
@@ -39,12 +40,14 @@ def main():
                 new_row.update({key: value})
 
             photo_link = row[photo_column]
-            photo_file_name = photo_destination_folder + photo_link[photo_link.rfind("/"):photo_link.rfind("?")]
-            photo_retriever.retrieve_photos(photo_link, photo_file_name)
+            photo_path = photo_destination_folder + photo_link[photo_link.rfind("/"):photo_link.rfind("?")]
+            photo_retriever.retrieve_photos(photo_link, photo_path)
 
-            image = photo_functions.open_image(photo_file_name)
+            image = photo_functions.open_image(photo_path)
             image = photo_functions.center_crop_image_by_percentage(image, crop_percentage)
-            photo_functions.save_image(image, photo_file_name)
+            if cropped_images_are_to_be_saved:
+                photo_path = photo_path.replace(photo_destination_folder, cropped_folder)
+                photo_functions.save_image(image, photo_path)
 
             results = color_analysis.analyze_color(image, 3)
             new_row["computed_colors"] = results

@@ -6,6 +6,7 @@
   }, "photos": {
         "base_photo_dir": "product_photos",
         "cropped_photo_dir": "cropped_photos",
+        "save_cropped_photos": true,
         "crop_percentage": 75
   }, "colors": {
     "red": {
