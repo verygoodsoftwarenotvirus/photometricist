@@ -54,4 +54,6 @@ def main():
             writer.writerow(row)
 
 if __name__ == "__main__":
-    main()
+    # main()
+    print(color_analysis.color_is_in_range("#B53232", ("#FF0000", "#C83232")))
+    print(color_analysis.color_is_in_range("#B53232", ("#FF0000", "#C83232"), 10))

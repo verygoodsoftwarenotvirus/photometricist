@@ -78,7 +78,7 @@ def k_means(points, k, min_diff):
 """
 
 
-def color_is_in_range(to_compare, color_range):
+def color_is_in_range(to_compare, color_range, margin_of_error=None):
     to_compare = hex_to_rgb(to_compare)
     floor_color, ceiling_color = color_range
     floor_color = hex_to_rgb(floor_color)
@@ -88,6 +88,9 @@ def color_is_in_range(to_compare, color_range):
         index = to_compare.index(color_value)
         floor_value = min(floor_color[index], ceiling_color[index])
         ceiling_value = max(floor_color[index], ceiling_color[index])
+        if margin_of_error:
+            floor_value -= floor_value * (.01 * margin_of_error)
+            ceiling_value += ceiling_value * (.01 * margin_of_error)
         if not floor_value < color_value < ceiling_value:
             return False
 
