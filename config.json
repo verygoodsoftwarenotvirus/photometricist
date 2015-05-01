@@ -7,9 +7,11 @@
   "photos": {
     "base_photo_dir": "product_photos",
     "cropped_photo_dir": "cropped_photos",
-    "save_product_photos": true,
     "save_cropped_photos": true,
     "crop_percentage": 75
+  },
+  "results": {
+    "confidence_minimum": 50
   },
   "colors": {
     "indigo": {

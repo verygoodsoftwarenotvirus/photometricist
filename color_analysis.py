@@ -4,8 +4,10 @@ import random
 from webcolors import rgb_to_hex, hex_to_rgb
 
 """
-    Modified from
+    This code is either stolen and modified or inpired by:
      http://charlesleifer.com/blog/using-python-and-k-means-to-find-the-dominant-colors-in-images/
+
+    ...depending on your perspective.
 """
 
 Point = namedtuple('Point', ('coords', 'n', 'ct'))
