@@ -91,7 +91,7 @@ def color_is_in_range(to_compare, color_range, margin_of_error=None):
         if margin_of_error:
             floor_value -= floor_value * (.01 * margin_of_error)
             ceiling_value += ceiling_value * (.01 * margin_of_error)
-        if not floor_value < color_value < ceiling_value:
+        if not floor_value <= color_value <= ceiling_value:
             return False
 
     return True

@@ -8,16 +8,35 @@
         "cropped_photo_dir": "cropped_photos",
         "save_cropped_photos": true,
         "crop_percentage": 75
-  }, "colors": {
+  },
+  "colors": {
+    "indigo": {
+      "floor": "#18264E",
+      "ceiling": "#3C60C3"
+    },
+    "sienna": {
+      "floor": "#7B3A1A",
+      "ceiling": "#C98B6A"
+    },
+    "orange": {
+      "floor": "#A83D28",
+      "ceiling": "#E78563"
+    },
+    "purple": {
+      "floor": "#23172A",
+      "ceiling": "#583B6D"
+    },
     "red": {
-      "start": "#FF0000",
-      "finish": "#C83232"
-    }, "blue": {
-      "start": "#0000FF",
-      "finish": "#3232C8"
-    },"green": {
-      "start": "#00FF00",
-      "finish": "#32C832"
+      "floor": "#460009",
+      "ceiling": "#900129"
+    },
+    "lime green": {
+      "floor": "#82963F",
+      "ceiling": "#E0F1A4"
+    },
+    "denim": {
+      "floor": "#18192C",
+      "ceiling": "#56587c"
     }
   }
 }

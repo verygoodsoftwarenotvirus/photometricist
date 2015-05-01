@@ -32,6 +32,7 @@ def main():
         reader = csv.DictReader(source)
         fieldnames = reader.fieldnames
         fieldnames.append("computed_colors")
+        fieldnames.append("computed_strategy_colors")
         writer = csv.DictWriter(output, fieldnames)
         writer.writeheader()
         for row in reader:
@@ -51,9 +52,18 @@ def main():
 
             results = color_analysis.analyze_color(image, 3)
             new_row["computed_colors"] = results
+
+            computed_strategy_colors = []
+            for color in config["colors"]:
+                color_floor = config["colors"][color]["floor"]
+                color_ceiling = config["colors"][color]["ceiling"]
+                color_range = (color_floor, color_ceiling)
+                for result in results:
+                    if color_analysis.color_is_in_range(result, color_range):
+                        computed_strategy_colors.append(color)
+
+            new_row["computed_strategy_colors"] = set(computed_strategy_colors)
             writer.writerow(row)
 
 if __name__ == "__main__":
-    # main()
-    print(color_analysis.color_is_in_range("#B53232", ("#FF0000", "#C83232")))
-    print(color_analysis.color_is_in_range("#B53232", ("#FF0000", "#C83232"), 10))
+    main()
