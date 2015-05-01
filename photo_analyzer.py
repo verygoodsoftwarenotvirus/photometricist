@@ -62,7 +62,9 @@ def main():
                     if color_analysis.color_is_in_range(result, color_range):
                         computed_strategy_colors.append(color)
 
-            new_row["computed_strategy_colors"] = set(computed_strategy_colors)
+            computed_strategy_colors = set(computed_strategy_colors)
+            if computed_strategy_colors:
+                new_row["computed_strategy_colors"] = computed_strategy_colors
             writer.writerow(row)
 
 if __name__ == "__main__":
