@@ -20,9 +20,9 @@ def get_points(image):
     return points
 
 
-def analyze_color(image, n=3):
+def analyze_color(image, k=3):
     points = get_points(image)
-    clusters = k_means(points, n, 1)
+    clusters = k_means(points, k, 1)
     colors = [map(int, c.center.coords) for c in clusters]
 
     result = []
@@ -31,8 +31,8 @@ def analyze_color(image, n=3):
     return result
 
 
-def euclidean(p1, p2):
-    return sqrt(sum([(p1.coords[i] - p2.coords[i]) ** 2 for i in range(p1.n)]))
+def euclidean(point1, point2):
+    return sqrt(sum([(point1.coords[i] - point2.coords[i]) ** 2 for i in range(point1.n)]))
 
 
 def calculate_center(points, n):
@@ -69,9 +69,7 @@ def k_means(points, k, min_diff):
 
         if diff < min_diff:
             break
-
     return clusters
-
 
 """
     Everything beyond here is my own code

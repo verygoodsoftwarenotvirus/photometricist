@@ -28,10 +28,7 @@ def center_crop_image_by_percentage(image, percentage=0):
     :return: the cropped image object.
     """
 
-    percentage = int(percentage)
-    if percentage > 100:
-        raise ValueError("you cannot crop an image to be larger than the original image.")
-
+    percentage = int(min(percentage, 100))
     modifier = 0
     if percentage:
         modifier = percentage * .01
@@ -42,5 +39,7 @@ def center_crop_image_by_percentage(image, percentage=0):
     top = abs(int(width * modifier))
     bottom = abs(int(height * modifier))
 
-    crop_box = (left, right, top, bottom)
-    return image.crop(crop_box)
+    return image.crop((left,
+                       right,
+                       top,
+                       bottom))
