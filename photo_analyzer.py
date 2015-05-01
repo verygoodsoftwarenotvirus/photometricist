@@ -5,6 +5,8 @@ import photo_retriever
 import photo_functions
 import color_analysis
 
+FIVE_AMPS = "&&&&&"
+
 
 def establish_csv_headers(config, source_file_headers):
     headers = []
@@ -26,7 +28,8 @@ def validate_configuration(config):
             return False
 
     numbers = [config["photos"]["crop_percentage"],
-               config["results"]["confidence_minimum"]]
+               config["results"]["confidence_minimum"],
+               config["results"]["desired_analysis_clusters"]]
     for number in numbers:
         if not isinstance(number, (float, int)):
             return False
@@ -51,6 +54,7 @@ def main():
     config_valid = validate_configuration(config)
     if not config_valid:
         raise ValueError("Configuration values are invalid, ")
+
     source_file = config["file"]["source_file"]
     save_as = config["file"]["save_as"]
     photo_column = config["file"]["photo_info_column"]
@@ -58,7 +62,8 @@ def main():
     cropped_folder = config["photos"]["cropped_photo_dir"]
     photo_destination_folder = config["photos"]["base_photo_dir"]
     crop_percentage = config["photos"]["crop_percentage"]
-    minimum_confidence = config["results"]["confidence_minimum"]
+    # minimum_confidence = config["results"]["confidence_minimum"]
+    k = config["results"]["desired_analysis_clusters"]
 
     if not os.path.isdir(photo_destination_folder):
         os.mkdir(photo_destination_folder)
@@ -71,7 +76,6 @@ def main():
         writer = csv.DictWriter(output, fieldnames)
         writer.writeheader()
         for row in reader:
-            new_row = row
             photo_link = row[photo_column]
             photo_path = photo_destination_folder + photo_link[photo_link.rfind("/"):photo_link.rfind("?")]
             photo_retriever.retrieve_photos(photo_link, photo_path)
@@ -82,21 +86,12 @@ def main():
                 photo_path = photo_path.replace(photo_destination_folder, cropped_folder)
                 photo_functions.save_image(image, photo_path)
 
-            results = color_analysis.analyze_color(image, 3)
-            new_row["computed_colors"] = results
+            results = color_analysis.analyze_color(image, k)
+            row["computed_colors"] = results
 
-            computed_strategy_colors = []
-            for color in config["colors"]:
-                color_floor = config["colors"][color]["floor"]
-                color_ceiling = config["colors"][color]["ceiling"]
-                color_range = (color_floor, color_ceiling)
-                for result in results:
-                    if color_analysis.color_is_in_range(result, color_range):
-                        computed_strategy_colors.append(color)
-
-            computed_strategy_colors = set(computed_strategy_colors)
+            computed_strategy_colors = set(color_analysis.compute_color_matches(config, results))
             if computed_strategy_colors:
-                new_row["computed_strategy_colors"] = computed_strategy_colors
+                row["computed_strategy_colors"] = computed_strategy_colors
             writer.writerow(row)
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 {
+  "debug": true,
   "file": {
     "source_file": "before_color.csv",
     "save_as": "output.csv",
@@ -11,6 +12,7 @@
     "crop_percentage": 75
   },
   "results": {
+    "desired_analysis_clusters": 3,
     "confidence_minimum": 50
   },
   "colors": {

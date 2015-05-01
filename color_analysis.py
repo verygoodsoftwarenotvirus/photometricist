@@ -93,5 +93,19 @@ def color_is_in_range(to_compare, color_range, margin_of_error=None):
             ceiling_value += ceiling_value * (.01 * margin_of_error)
         if not floor_value <= color_value <= ceiling_value:
             return False
-
     return True
+
+
+def compute_color_matches(config, results, minimum_confidence=None):
+    computed_colors = []
+    for color in config["colors"]:
+        color_floor = config["colors"][color]["floor"]
+        color_ceiling = config["colors"][color]["ceiling"]
+        color_range = (color_floor, color_ceiling)
+        for result in results:
+            if minimum_confidence:
+                # TODO: implement algorithm confidence calculation.
+                pass
+            if color_is_in_range(result, color_range):
+                computed_colors.append(color)
+    return computed_colors
