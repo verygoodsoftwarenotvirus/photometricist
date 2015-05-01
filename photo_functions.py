@@ -1,3 +1,4 @@
+import base64
 from PIL import Image
 
 
@@ -7,6 +8,15 @@ def open_image(filename):
 
 def save_image(image, filename):
     image.save(filename)
+
+
+def base645_encode_image(filename):
+    with open(filename, "rb") as image:
+        return base64.b64encode(image.read())
+
+
+def create_photo_thumbnail(image, size=300):
+    return image.thumbnail((size, size))
 
 
 def center_crop_image_by_percentage(image, percentage=0):
@@ -34,7 +44,3 @@ def center_crop_image_by_percentage(image, percentage=0):
 
     crop_box = (left, right, top, bottom)
     return image.crop(crop_box)
-
-
-def create_photo_thumbnail(image, size=200):
-    return image.thumbnail((size, size))

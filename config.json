@@ -3,11 +3,12 @@
     "source_file": "before_color.csv",
     "save_as": "output.csv",
     "photo_info_column": "image_url"
-  }, "photos": {
-        "base_photo_dir": "product_photos",
-        "cropped_photo_dir": "cropped_photos",
-        "save_cropped_photos": true,
-        "crop_percentage": 75
+  },
+  "photos": {
+    "base_photo_dir": "product_photos",
+    "cropped_photo_dir": "cropped_photos",
+    "save_cropped_photos": true,
+    "crop_percentage": 75
   },
   "colors": {
     "indigo": {
