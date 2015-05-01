@@ -64,35 +64,54 @@ def main():
     crop_percentage = config["photos"]["crop_percentage"]
     # minimum_confidence = config["results"]["confidence_minimum"]
     k = config["results"]["desired_analysis_clusters"]
+    debugging = config.get("debug")
 
     if not os.path.isdir(photo_destination_folder):
         os.mkdir(photo_destination_folder)
     if not os.path.isdir(cropped_folder):
         os.mkdir(cropped_folder)
 
-    with open(source_file) as source, open(save_as, "w") as output:
-        reader = csv.DictReader(source)
-        fieldnames = establish_csv_headers(config, reader.fieldnames)
-        writer = csv.DictWriter(output, fieldnames)
-        writer.writeheader()
-        for row in reader:
-            photo_link = row[photo_column]
-            photo_path = photo_destination_folder + photo_link[photo_link.rfind("/"):photo_link.rfind("?")]
-            photo_retriever.retrieve_photos(photo_link, photo_path)
+    if debugging:
+        debug_folder = "test_images"
+        test_files = os.listdir(debug_folder)
+        with open("debug_results.csv", "w") as output:
+            writer = csv.DictWriter(output, ["photo_file", "computed_colors"])
+            for test_file in test_files:
+                new_row = {"photo_file": test_file}
+                photo_path = "{0}/{1}".format(debug_folder, test_file)
+                image = photo_functions.open_image(photo_path)
+                image = photo_functions.center_crop_image_by_percentage(image, crop_percentage)
+                if cropped_images_are_to_be_saved:
+                    photo_path = photo_path.replace(debug_folder, cropped_folder)
+                    photo_functions.save_image(image, photo_path)
+                results = color_analysis.analyze_color(image, k)
+                new_row["computed_colors"] = results
+                writer.writerow(new_row)
+        # TODO: web-page-ish output.
+    else:
+        with open(source_file) as source, open(save_as, "w") as output:
+            reader = csv.DictReader(source)
+            fieldnames = establish_csv_headers(config, reader.fieldnames)
+            writer = csv.DictWriter(output, fieldnames)
+            writer.writeheader()
+            for row in reader:
+                photo_link = row[photo_column]
+                photo_path = photo_destination_folder + photo_link[photo_link.rfind("/"):photo_link.rfind("?")]
+                photo_retriever.retrieve_photos(photo_link, photo_path)
 
-            image = photo_functions.open_image(photo_path)
-            image = photo_functions.center_crop_image_by_percentage(image, crop_percentage)
-            if cropped_images_are_to_be_saved:
-                photo_path = photo_path.replace(photo_destination_folder, cropped_folder)
-                photo_functions.save_image(image, photo_path)
+                image = photo_functions.open_image(photo_path)
+                image = photo_functions.center_crop_image_by_percentage(image, crop_percentage)
+                if cropped_images_are_to_be_saved:
+                    photo_path = photo_path.replace(photo_destination_folder, cropped_folder)
+                    photo_functions.save_image(image, photo_path)
 
-            results = color_analysis.analyze_color(image, k)
-            row["computed_colors"] = results
+                results = color_analysis.analyze_color(image, k)
+                row["computed_colors"] = results
 
-            computed_strategy_colors = set(color_analysis.compute_color_matches(config, results))
-            if computed_strategy_colors:
-                row["computed_strategy_colors"] = computed_strategy_colors
-            writer.writerow(row)
+                computed_strategy_colors = set(color_analysis.compute_color_matches(config, results))
+                if computed_strategy_colors:
+                    row["computed_strategy_colors"] = computed_strategy_colors
+                writer.writerow(row)
 
 if __name__ == "__main__":
     main()
