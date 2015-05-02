@@ -1,5 +1,5 @@
 {
-  "debug": true,
+  "debug": false,
   "file": {
     "source_file": "before_color.csv",
     "save_as": "output.csv",

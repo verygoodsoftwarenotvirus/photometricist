@@ -13,7 +13,8 @@ def establish_csv_headers(config, source_file_headers):
     photo_column = config["file"]["photo_info_column"]
     if "sku" in [column.lower() for column in source_file_headers]:
         headers.append('sku')
-    headers += [photo_column, "computed_color", "confidence_index"]
+    headers += [photo_column, "computed_colors",
+                "computed_strategy_colors","confidence_index"]
     return headers
 
 
@@ -92,9 +93,10 @@ def main():
         with open(source_file) as source, open(save_as, "w") as output:
             reader = csv.DictReader(source)
             fieldnames = establish_csv_headers(config, reader.fieldnames)
-            writer = csv.DictWriter(output, fieldnames)
+            writer = csv.DictWriter(output, fieldnames, lineterminator='\n')
             writer.writeheader()
             for row in reader:
+                new_row = {}
                 photo_link = row[photo_column]
                 photo_path = photo_destination_folder + photo_link[photo_link.rfind("/"):photo_link.rfind("?")]
                 photo_retriever.retrieve_photos(photo_link, photo_path)
@@ -106,12 +108,12 @@ def main():
                     photo_functions.save_image(image, photo_path)
 
                 results = color_analysis.analyze_color(image, k)
-                row["computed_colors"] = results
+                new_row["computed_colors"] = results
 
                 computed_strategy_colors = set(color_analysis.compute_color_matches(config, results))
                 if computed_strategy_colors:
-                    row["computed_strategy_colors"] = computed_strategy_colors
-                writer.writerow(row)
+                    new_row["computed_strategy_colors"] = computed_strategy_colors
+                writer.writerow(new_row)
 
 if __name__ == "__main__":
     main()
