@@ -1,9 +1,11 @@
 import os
 import csv
 import json
+import time
+import color_analysis
 import photo_retriever
 import photo_functions
-import color_analysis
+import result_page_builder
 
 FIVE_AMPS = "&&&&&"
 
@@ -57,7 +59,6 @@ def main():
         raise ValueError("Configuration values are invalid, ")
 
     source_file = config["file"]["source_file"]
-    save_as = config["file"]["save_as"]
     photo_column = config["file"]["photo_info_column"]
     cropped_images_are_to_be_saved = config["photos"]["save_cropped_photos"]
     cropped_folder = config["photos"]["cropped_photo_dir"]
@@ -65,6 +66,8 @@ def main():
     crop_percentage = config["photos"]["crop_percentage"]
     # minimum_confidence = config["results"]["confidence_minimum"]
     k = config["results"]["desired_analysis_clusters"]
+    output_format = config["file"]["output_type"].lower()
+    save_as = "{0}.{1}".format(config["file"]["save_as"], output_format)
     debugging = config.get("debug")
 
     if not os.path.isdir(photo_destination_folder):
@@ -75,28 +78,26 @@ def main():
     if debugging:
         debug_folder = "test_images"
         test_files = os.listdir(debug_folder)
-        with open("debug_results.csv", "w") as output:
-            writer = csv.DictWriter(output, ["photo_file", "computed_colors"])
-            for test_file in test_files:
-                new_row = {"photo_file": test_file}
-                photo_path = "{0}/{1}".format(debug_folder, test_file)
-                image = photo_functions.open_image(photo_path)
-                image = photo_functions.center_crop_image_by_percentage(image, crop_percentage)
-                if cropped_images_are_to_be_saved:
-                    photo_path = photo_path.replace(debug_folder, cropped_folder)
-                    photo_functions.save_image(image, photo_path)
-                results = color_analysis.analyze_color(image, k)
-                new_row["computed_colors"] = results
-                writer.writerow(new_row)
-        # TODO: web-page-ish output.
+        results = {}
+        for test_file in test_files:
+            photo_path = "{0}/{1}".format(debug_folder, test_file)
+            image = photo_functions.open_image(photo_path)
+            image = photo_functions.center_crop_image_by_percentage(image, crop_percentage)
+            if cropped_images_are_to_be_saved:
+                photo_path = photo_path.replace(debug_folder, cropped_folder)
+                photo_functions.save_image(image, photo_path)
+            analysis_result = color_analysis.analyze_color(image, k)
+            results[photo_path] = analysis_result
     else:
         with open(source_file) as source, open(save_as, "w") as output:
             reader = csv.DictReader(source)
-            fieldnames = establish_csv_headers(config, reader.fieldnames)
-            writer = csv.DictWriter(output, fieldnames, lineterminator='\n')
-            writer.writeheader()
+            if output_format == "csv":
+                fieldnames = establish_csv_headers(config, reader.fieldnames)
+                writer = csv.DictWriter(output, fieldnames, lineterminator='\n')
+                writer.writeheader()
+            if output_format == "html":
+                results = {}
             for row in reader:
-                new_row = {}
                 photo_link = row[photo_column]
                 photo_path = photo_destination_folder + photo_link[photo_link.rfind("/"):photo_link.rfind("?")]
                 photo_retriever.retrieve_photos(photo_link, photo_path)
@@ -107,13 +108,17 @@ def main():
                     photo_path = photo_path.replace(photo_destination_folder, cropped_folder)
                     photo_functions.save_image(image, photo_path)
 
-                results = color_analysis.analyze_color(image, k)
-                new_row["computed_colors"] = results
-
-                computed_strategy_colors = set(color_analysis.compute_color_matches(config, results))
-                if computed_strategy_colors:
-                    new_row["computed_strategy_colors"] = computed_strategy_colors
-                writer.writerow(new_row)
+                analysis_results = color_analysis.analyze_color(image, k)
+                if output_format == "csv":
+                    new_row = {"computed_colors": analysis_results}
+                    computed_strategy_colors = set(color_analysis.compute_color_matches(config, analysis_results))
+                    if computed_strategy_colors:
+                        new_row["computed_strategy_colors"] = computed_strategy_colors
+                    writer.writerow(new_row)
+                elif output_format == "html":
+                    results[photo_path] = analysis_results
+            if output_format == "html":
+                output.write(result_page_builder.build_page(results))
 
 if __name__ == "__main__":
     main()

@@ -2,8 +2,9 @@
   "debug": false,
   "file": {
     "source_file": "before_color.csv",
-    "save_as": "output.csv",
-    "photo_info_column": "image_url"
+    "save_as": "output",
+    "photo_info_column": "image_url",
+    "output_type": "HTML"
   },
   "photos": {
     "base_photo_dir": "product_photos",
