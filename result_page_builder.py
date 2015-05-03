@@ -8,7 +8,7 @@ page_template = """
 
             .wrapper {{
               display: flex;
-              width: 320px;
+              width: {crop_width}px;
               margin: 0 auto;
               flex-flow: row wrap;
               font-weight: bold;
@@ -31,14 +31,13 @@ page_template = """
             $(document).ready(function(){{
                 $(".swatch").click(function(){{
                   var color = $(this).css("background-color");
-                  alert(color + " has been reported as invalid");
                   $(this).remove();
                 }});
             }});
         </script>
     </head>
     <body>
-        {0}
+        {products}
     </body>
 </html>
 """
@@ -62,9 +61,9 @@ def build_result(image_link, swatches):
            """.format(image_link, swatches)
 
 
-def build_page(analysis_results):
+def build_page(crop_width, analysis_results):
     result = ""
     for image in analysis_results:
         swatches = build_swatches(analysis_results[image])
         result += build_result(image, swatches)
-    return page_template.format(result)
+    return page_template.format(crop_width=crop_width, products=result)

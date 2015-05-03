@@ -97,6 +97,7 @@ def main():
                 writer.writeheader()
             if output_format == "html":
                 results = {}
+                crop_widths = []
             for row in reader:
                 photo_link = row[photo_column]
                 photo_path = photo_destination_folder + photo_link[photo_link.rfind("/"):photo_link.rfind("?")]
@@ -104,6 +105,7 @@ def main():
 
                 image = photo_functions.open_image(photo_path)
                 image = photo_functions.center_crop_image_by_percentage(image, crop_percentage)
+                crop_widths.append(photo_functions.get_image_width(image))
                 if cropped_images_are_to_be_saved:
                     photo_path = photo_path.replace(photo_destination_folder, cropped_folder)
                     photo_functions.save_image(image, photo_path)
@@ -118,7 +120,8 @@ def main():
                 elif output_format == "html":
                     results[photo_path] = analysis_results
             if output_format == "html":
-                output.write(result_page_builder.build_page(results))
+                html_output = result_page_builder.build_page(max(crop_widths)+20, results)
+                output.write(html_output)
 
 if __name__ == "__main__":
     main()

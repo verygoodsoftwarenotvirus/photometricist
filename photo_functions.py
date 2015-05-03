@@ -10,7 +10,19 @@ def save_image(image, filename):
     image.save(filename)
 
 
-def base645_encode_image(filename):
+def get_image_width(image):
+    return image.size[0]
+
+
+def get_image_height(image):
+    return image.size[1]
+
+
+def get_image_size(image):
+    return image.size
+
+
+def base64_encode_image(filename):
     with open(filename, "rb") as image:
         return base64.b64encode(image.read())
 
