@@ -97,6 +97,7 @@ def main():
                 writer.writeheader()
             if output_format == "html":
                 results = {}
+                color_relationships = {}
                 crop_widths = []
             for row in reader:
                 photo_link = row[photo_column]
@@ -105,22 +106,24 @@ def main():
 
                 image = photo_functions.open_image(photo_path)
                 image = photo_functions.center_crop_image_by_percentage(image, crop_percentage)
-                crop_widths.append(photo_functions.get_image_width(image))
                 if cropped_images_are_to_be_saved:
                     photo_path = photo_path.replace(photo_destination_folder, cropped_folder)
                     photo_functions.save_image(image, photo_path)
 
                 analysis_results = color_analysis.analyze_color(image, k)
+                computed_strategy_colors, relationship_result= color_analysis.compute_color_matches(config, analysis_results)
                 if output_format == "csv":
                     new_row = {"computed_colors": analysis_results}
-                    computed_strategy_colors = set(color_analysis.compute_color_matches(config, analysis_results))
+                    computed_strategy_colors = set(computed_strategy_colors)
                     if computed_strategy_colors:
                         new_row["computed_strategy_colors"] = computed_strategy_colors
                     writer.writerow(new_row)
                 elif output_format == "html":
+                    crop_widths.append(photo_functions.get_image_width(image))
                     results[photo_path] = analysis_results
+                    color_relationships.update(relationship_result)
             if output_format == "html":
-                html_output = result_page_builder.build_page(max(crop_widths)+20, results)
+                html_output = result_page_builder.build_page(max(crop_widths)+20, results, color_relationships)
                 output.write(html_output)
 
 if __name__ == "__main__":

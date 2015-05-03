@@ -79,8 +79,8 @@ def k_means(points, k, min_diff):
 
 
 def color_is_in_range(to_compare, color_range, margin_of_error=None):
-    to_compare = hex_to_rgb(to_compare)
     floor_color, ceiling_color = color_range
+    to_compare = hex_to_rgb(to_compare)
     floor_color = hex_to_rgb(floor_color)
     ceiling_color = hex_to_rgb(ceiling_color)
 
@@ -89,6 +89,7 @@ def color_is_in_range(to_compare, color_range, margin_of_error=None):
         floor_value = min(floor_color[index], ceiling_color[index])
         ceiling_value = max(floor_color[index], ceiling_color[index])
         if margin_of_error:
+            margin_of_error = min(max(0, margin_of_error), 100)
             floor_value -= floor_value * (.01 * margin_of_error)
             ceiling_value += ceiling_value * (.01 * margin_of_error)
         if not floor_value <= color_value <= ceiling_value:
@@ -96,16 +97,18 @@ def color_is_in_range(to_compare, color_range, margin_of_error=None):
     return True
 
 
-def compute_color_matches(config, results, minimum_confidence=None):
+def compute_color_matches(config, results, margin_of_error=None, minimum_confidence=None):
     computed_colors = []
+    color_relationships = {}
     for color in config["colors"]:
         color_floor = config["colors"][color]["floor"]
         color_ceiling = config["colors"][color]["ceiling"]
         color_range = (color_floor, color_ceiling)
         for result in results:
-            if minimum_confidence:
-                # TODO: implement algorithm confidence calculation.
-                pass
-            if color_is_in_range(result, color_range):
+            if color_is_in_range(result, color_range, margin_of_error):
+                if color in color_relationships:
+                    color_relationships[result].append(color)
+                else:
+                    color_relationships[result] = [color]
                 computed_colors.append(color)
-    return computed_colors
+    return computed_colors, color_relationships
