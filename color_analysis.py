@@ -98,7 +98,6 @@ def color_is_in_range(to_compare, color_range, margin_of_error=None):
 
 
 def compute_color_matches(config, results, margin_of_error=None, minimum_confidence=None):
-    computed_colors = []
     color_relationships = {}
     for color in config["colors"]:
         color_floor = config["colors"][color]["floor"]
@@ -110,5 +109,4 @@ def compute_color_matches(config, results, margin_of_error=None, minimum_confide
                     color_relationships[result].append(color)
                 else:
                     color_relationships[result] = [color]
-                computed_colors.append(color)
-    return computed_colors, color_relationships
+    return color_relationships
