@@ -6,6 +6,7 @@ import color_analysis
 import photo_retriever
 import photo_functions
 import result_page_builder
+from datetime import datetime
 
 FIVE_AMPS = "&&&&&"
 
@@ -16,12 +17,13 @@ def establish_csv_headers(config, source_file_headers):
     if "sku" in [column.lower() for column in source_file_headers]:
         headers.append('sku')
     headers += [photo_column, "computed_colors",
-                "computed_strategy_colors","confidence_index"]
+                "computed_strategy_colors", "confidence_index"]
     return headers
 
 
 def validate_configuration(config):
-    strings = [config["file"]["source_file"],
+    strings = [config["file"]["encoding"],
+               config["file"]["source_file"],
                config["file"]["save_as"],
                config["file"]["output_type"],
                config["file"]["photo_info_column"],
@@ -60,12 +62,13 @@ def main():
         raise ValueError("Configuration values are invalid.")
 
     source_file = config["file"]["source_file"]
+    source_file_encoding = config["file"]["encoding"]
     photo_column = config["file"]["photo_info_column"]
     cropped_images_are_to_be_saved = config["photos"]["save_cropped_photos"]
     cropped_folder = config["photos"]["cropped_photo_dir"]
     photo_destination_folder = config["photos"]["base_photo_dir"]
     crop_percentage = config["photos"]["crop_percentage"]
-    # minimum_confidence = config["results"]["confidence_minimum"]
+    minimum_confidence = config["results"]["confidence_minimum"]
     k = config["results"]["desired_analysis_clusters"]
     output_format = config["file"]["output_type"].lower()
     if "save_as" in config["file"]:
@@ -93,7 +96,7 @@ def main():
             analysis_result = color_analysis.analyze_color(image, k)
             results[photo_path] = analysis_result
     else:
-        with open(source_file) as source, open(save_as, "w") as output:
+        with open(source_file, encoding=source_file_encoding) as source, open(save_as, "w") as output:
             reader = csv.DictReader(source)
             if output_format == "csv":
                 fieldnames = establish_csv_headers(config, reader.fieldnames)
@@ -105,6 +108,8 @@ def main():
                 crop_widths = []
             for row in reader:
                 photo_link = row[photo_column]
+                if not photo_link:
+                    continue
                 photo_path = photo_destination_folder + photo_link[photo_link.rfind("/"):photo_link.rfind("?")]
                 photo_retriever.retrieve_photos(photo_link, photo_path)
 
@@ -131,4 +136,9 @@ def main():
                 output.write(html_output)
 
 if __name__ == "__main__":
+    start_time = datetime.now()
+    print("Started at: {0}".format(start_time))
     main()
+    finish_time = datetime.now() - start_time
+    print("End time: {0}\n".format(datetime.now()))
+    print("Script complete, elapsed time: {0}".format(finish_time))
