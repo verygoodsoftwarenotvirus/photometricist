@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        html{
+            background-color: #222;
+            font-family: sans-serif;
+            color: white;
+        }
+
+        #variance{
+            width: 2rem;
+        }
+
+        .swatch{
+            margin: .5rem;
+            width: 5rem;
+            height: 5rem;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script>
+        /* Straight copied from StackOverflow: http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb */
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
+        /* This is original */
+        $(document).ready(function(){
+            $("#submit-button").click(function(){
+                var color = $("#hex-input").val().replace("#", "");
+                color = hexToRgb(color);
+                var percentage = $("#variance").val() || 0;
+
+                var floor_red = Math.min(Math.max(Math.floor(color.r - (color.r * (.01 * percentage))), 0), 255);
+                var floor_green = Math.min(Math.max(Math.floor(color.g - (color.g * (.01 * percentage))), 0), 255);
+                var floor_blue = Math.min(Math.max(Math.floor(color.b - (color.b * (.01 * percentage))), 0), 255);
+
+                var ceiling_red = Math.min(Math.max(Math.ceil(color.r + (color.r * (.01 * percentage))), 0), 255);
+                var ceiling_green = Math.min(Math.max(Math.ceil(color.g + (color.g * (.01 * percentage))), 0), 255);
+                var ceiling_blue = Math.min(Math.max(Math.ceil(color.b + (color.b * (.01 * percentage))), 0), 255);
+
+                var floor_color = rgbToHex(floor_red, floor_green, floor_blue);
+                var ceiling_color = rgbToHex(ceiling_red, ceiling_green, ceiling_blue);
+                var input_color = rgbToHex(color.r, color.g, color.b);
+
+                $("#floor").css("background-color", floor_color);
+                $("#input").css("background-color", input_color);
+                $("#ceiling").css("background-color", ceiling_color);
+            });
+        });
+    </script>
+</head>
+<body>
+    <p>Color:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%</p>
+    <input type="text" id="hex-input" /> <input type="numeric" id="variance">
+    <p><button id="submit-button">Submit</button></p>
+    <div class="swatch" id="floor" title="floor"></div>
+    <div class="swatch" id="input" title="input"></div>
+    <div class="swatch" id="ceiling" title="ceiling"></div>
+</body>
+</html>
