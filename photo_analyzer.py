@@ -23,6 +23,7 @@ def establish_csv_headers(config, source_file_headers):
 def validate_configuration(config):
     strings = [config["file"]["source_file"],
                config["file"]["save_as"],
+               config["file"]["output_type"],
                config["file"]["photo_info_column"],
                config["photos"]["cropped_photo_dir"],
                config["photos"]["base_photo_dir"]]
@@ -56,7 +57,7 @@ def main():
     config = get_config_from_file("config.json")
     config_valid = validate_configuration(config)
     if not config_valid:
-        raise ValueError("Configuration values are invalid, ")
+        raise ValueError("Configuration values are invalid.")
 
     source_file = config["file"]["source_file"]
     photo_column = config["file"]["photo_info_column"]
@@ -67,7 +68,10 @@ def main():
     # minimum_confidence = config["results"]["confidence_minimum"]
     k = config["results"]["desired_analysis_clusters"]
     output_format = config["file"]["output_type"].lower()
-    save_as = "{0}.{1}".format(config["file"]["save_as"], output_format)
+    if "save_as" in config["file"]:
+        save_as = "{0}.{1}".format(config["file"]["save_as"], output_format)
+    else:
+        save_as = "{0}.{1}".format(time.time(), output_format)
     debugging = config.get("debug")
 
     if not os.path.isdir(photo_destination_folder):
@@ -111,7 +115,7 @@ def main():
                     photo_functions.save_image(image, photo_path)
 
                 analysis_results = color_analysis.analyze_color(image, k)
-                computed_strategy_colors, relationship_result= color_analysis.compute_color_matches(config, analysis_results)
+                computed_strategy_colors, relationship_result = color_analysis.compute_color_matches(config, analysis_results)
                 if output_format == "csv":
                     new_row = {"computed_colors": analysis_results}
                     computed_strategy_colors = set(computed_strategy_colors)

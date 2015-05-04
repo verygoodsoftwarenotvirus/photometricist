@@ -54,7 +54,7 @@ def build_swatches(colors, color_relationships):
             for match in color_relationships[color]:
                 matched_colors += "{0}, ".format(match)
             matched_colors = matched_colors[:-2]
-        swatches += '<div class="swatch" style="background: {0};" title="{0}">{1}</div>\n'.format(color, matched_colors)
+        swatches += '<div class="swatch" style="background: {0};" title="{0}">{1}</div>\n                   '.format(color, matched_colors)
     return swatches
 
 

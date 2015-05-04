@@ -32,14 +32,6 @@ def create_photo_thumbnail(image, size=300):
 
 
 def center_crop_image_by_percentage(image, percentage=0):
-    """
-    TODO: handle different percentages
-
-    :param image: a PIL Image object
-    :param percentage: the percentage you'd like to crop away.
-    :return: the cropped image object.
-    """
-
     percentage = int(min(percentage, 100))
     modifier = 0
     if percentage:
