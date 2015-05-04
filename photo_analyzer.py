@@ -40,7 +40,8 @@ def validate_configuration(config):
         if not isinstance(number, (float, int)):
             return False
 
-    booleans = [config["photos"]["save_cropped_photos"]]
+    booleans = [config["debug"],
+                config["photos"]["save_cropped_photos"]]
     for boolean in booleans:
         if not isinstance(boolean, bool):
             return False
