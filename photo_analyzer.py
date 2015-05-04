@@ -99,13 +99,13 @@ def main():
     else:
         with open(source_file, encoding=source_file_encoding) as source, open(save_as, "w") as output:
             reader = csv.DictReader(source)
+            color_relationships = {}
             if output_format == "csv":
                 fieldnames = establish_csv_headers(config, reader.fieldnames)
                 writer = csv.DictWriter(output, fieldnames, lineterminator='\n')
                 writer.writeheader()
             if output_format == "html":
                 results = {}
-                color_relationships = {}
                 crop_widths = []
             for row in reader:
                 photo_link = row[photo_column]
@@ -121,9 +121,18 @@ def main():
                     photo_functions.save_image(image, photo_path)
 
                 analysis_results = color_analysis.analyze_color(image, k)
-                computed_strategy_colors, relationship_result = color_analysis.compute_color_matches(config, analysis_results)
+                relationship_result = color_analysis.compute_color_matches(config, analysis_results)
+                computed_strategy_colors = []
+                for relationship in relationship_result:
+                    for color in relationship_result[relationship]:
+                        computed_strategy_colors.append(color)
+                color_relationships.update(relationship_result)
                 if output_format == "csv":
-                    new_row = {"computed_colors": analysis_results}
+                    new_row = {}
+                    for key, value in row.items():
+                        if key in fieldnames:
+                            new_row[key] = value
+                    new_row["computed_colors"] = analysis_results
                     computed_strategy_colors = set(computed_strategy_colors)
                     if computed_strategy_colors:
                         new_row["computed_strategy_colors"] = computed_strategy_colors
@@ -131,7 +140,6 @@ def main():
                 elif output_format == "html":
                     crop_widths.append(photo_functions.get_image_width(image))
                     results[photo_path] = analysis_results
-                    color_relationships.update(relationship_result)
             if output_format == "html":
                 html_output = result_page_builder.build_page(max(crop_widths)+20, results, color_relationships)
                 output.write(html_output)
