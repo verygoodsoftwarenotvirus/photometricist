@@ -1,8 +1,8 @@
 {
-  "debug": "debug",
+  "debug": false,
   "file": {
-    "encoding": "ISO-8859-1",
-    "source_file": "new.csv",
+    "encoding": "utf-8",
+    "source_file": "before_color.csv",
     "photo_info_column": "image_url",
     "save_as": "output",
     "output_type": "html"
@@ -20,45 +20,31 @@
   "colors": {
     "indigo": {
       "color": "#2A4389",
-      "variance": 10,
-      "floor": "#18264E",
-      "ceiling": "#3C60C3"
+      "variance": 10
     },
     "sienna": {
       "color": "#A26342",
-      "variance": 10,
-      "floor": "#7B3A1A",
-      "ceiling": "#C98B6A"
+      "variance": 10
     },
     "orange": {
       "color": "#FFA500",
-      "variance": 10,
-      "floor": "#A83D28",
-      "ceiling": "#E78563"
+      "variance": 10
     },
     "purple": {
       "color": "#4B325D",
-      "variance": 10,
-      "floor": "#3E294C",
-      "ceiling": "#583B6D"
+      "variance": 10
     },
     "red": {
       "color": "#7E0121",
-      "variance": 10,
-      "floor": "#460009",
-      "ceiling": "#900129"
+      "variance": 10
     },
     "lime green": {
       "color": "#8FA152",
-      "variance": 10,
-      "floor": "#82963F",
-      "ceiling": "#9BAB65"
+      "variance": 10
     },
     "denim": {
       "color": "#3C3D5D",
-      "variance": 10,
-      "floor": "#21223D",
-      "ceiling": "#56587C"
+      "variance": 10
     }
   }
 }

@@ -46,6 +46,7 @@ def validate_configuration(config):
         if not isinstance(boolean, bool):
             return False
 
+    # TODO: ensure variables meet standards.
     return True
 
 
