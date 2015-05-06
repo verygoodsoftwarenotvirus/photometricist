@@ -113,6 +113,10 @@ def main():
                         new_row["computed_strategy_colors"] = computed_strategy_colors
                     writer.writerow(new_row)
                 elif output_format == "html":
+                    b64_encoded = str(photo_functions.base64_encode_image(photo_path))[2:-1]
+                    photo_extension = photo_path[photo_path.rfind(".")+1:]
+                    photo_path = "{0}{1}".format("data:image/jpeg;base64,",
+                                                 b64_encoded)
                     crop_widths.append(photo_functions.get_image_width(image))
                     results[photo_path] = analysis_results
             if output_format == "html":
