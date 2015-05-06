@@ -1,4 +1,5 @@
 {
+  "mode": "color detection",
   "debug": false,
   "verbose": true,
   "file": {

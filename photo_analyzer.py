@@ -38,12 +38,21 @@ def main():
     conf = get_config_from_file("config.json")
     try:
         # required parameters
+        app_mode = conf["mode"]
         source_file = conf["file"]["source_file"]
         photo_column = conf["file"]["photo_info_column"]
         id(conf["colors"])
     except KeyError as error:
         print("{0} not found in configuration file".format(error))
         exit()
+
+    if app_mode == "color detection":
+        pass
+    elif app_mode == "":
+        # TODO: implement other modes.
+        pass
+    else:
+        raise ValueError("Application mode '{0}' invalid.".format(app_mode))
 
     source_file_dir = conf["file"].get("source_file_location")
     if source_file_dir[:-1] == "/":
@@ -71,6 +80,7 @@ def main():
         os.mkdir(cropped_folder)
     except FileExistsError:
         pass
+
     try:
         with open(source_file, encoding=input_encoding) as source, open(save_as, "w") as output:
             reader = csv.DictReader(source)
