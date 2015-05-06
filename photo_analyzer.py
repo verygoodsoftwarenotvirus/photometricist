@@ -37,25 +37,28 @@ def get_config_from_file(file_location="config.json"):
 def main():
     configuration = get_config_from_file("config.json")
     try:
+        # required parameters
         source_file = configuration["file"]["source_file"]
-        source_file_encoding = configuration["file"]["encoding"]
         photo_column = configuration["file"]["photo_info_column"]
+        colors = configuration["colors"]
     except KeyError as error:
-        print(error)
+        print("{0} not found in configuration file".format(error))
         exit()
 
+    input_encoding = configuration["file"].get("encoding", "utf-8")
     output_format = configuration["file"].get("output_type", "html").lower()
     save_as = "{0}.{1}".format(configuration["file"].get("save_as", str(time.time())), output_format)
 
-    cropped_images_are_to_be_saved = configuration["photos"].get("save_cropped_photos", False)
-    cropped_folder = configuration["photos"].get("cropped_photo_dir", "cropped_photos")
-    photo_destination_folder = configuration["photos"].get("base_photo_dir", "product_photos")
+    cropped_folder = configuration["photos"].get("cropped_photo_dir", "cropped_photos").lower()
+    photo_destination_folder = configuration["photos"].get("base_photo_dir", "product_photos").lower()
     crop_percentage = configuration["photos"].get("crop_percentage", 100)
     k = configuration["results"].get("desired_analysis_clusters", 3)
+    minimum_confidence = configuration["results"].get("confidence_minimum", 0)
 
     verbose = configuration.get("verbose", False)
     debugging = configuration.get("debug", False)
-    minimum_confidence = configuration["results"].get("confidence_minimum", 0)
+    cropped_images_are_to_be_saved = configuration["photos"].get("save_cropped_photos", True)
+    product_images_are_to_be_saved = configuration["photos"].get("save_full_photos", True)
 
     try:
         os.mkdir(photo_destination_folder)
@@ -63,7 +66,7 @@ def main():
     except FileExistsError:
         pass
     try:
-        with open(source_file, encoding=source_file_encoding) as source, open(save_as, "w") as output:
+        with open(source_file, encoding=input_encoding) as source, open(save_as, "w") as output:
             reader = csv.DictReader(source)
             color_relationships = {}
             if output_format == "csv":
@@ -77,7 +80,8 @@ def main():
                 photo_link = row[photo_column]
                 if not photo_link:
                     continue
-                photo_path = photo_destination_folder + photo_link[photo_link.rfind("/"):photo_link.rfind("?")]
+                photo_path = "{0}{1}".format(photo_destination_folder,
+                                             photo_link[photo_link.rfind("/"):photo_link.rfind("?")])
                 photo_retriever.retrieve_photos(photo_link, photo_path)
 
                 image = photo_functions.open_image(photo_path)
