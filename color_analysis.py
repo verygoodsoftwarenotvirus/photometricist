@@ -1,6 +1,6 @@
-from collections import namedtuple
-from math import sqrt
+import math
 import random
+from collections import namedtuple
 from webcolors import rgb_to_hex, hex_to_rgb
 
 """
@@ -34,7 +34,7 @@ def analyze_color(image, k=3):
 
 
 def euclidean(point1, point2):
-    return sqrt(sum([(point1.coords[i] - point2.coords[i]) ** 2 for i in range(point1.n)]))
+    return math.sqrt(sum([(point1.coords[i] - point2.coords[i]) ** 2 for i in range(point1.n)]))
 
 
 def calculate_center(points, n):
@@ -78,33 +78,26 @@ def k_means(points, k, min_diff):
 """
 
 
-def color_is_in_range(to_compare, color_range, margin_of_error=None):
-    floor_color, ceiling_color = color_range
+def color_is_in_range(to_compare, floor_color, ceiling_color):
     to_compare = hex_to_rgb(to_compare)
-    floor_color = hex_to_rgb(floor_color)
-    ceiling_color = hex_to_rgb(ceiling_color)
-
-    for color_value in to_compare:
-        index = to_compare.index(color_value)
-        floor_value = min(floor_color[index], ceiling_color[index])
-        ceiling_value = max(floor_color[index], ceiling_color[index])
-        if margin_of_error:
-            margin_of_error = min(max(0, margin_of_error), 100)
-            floor_value -= floor_value * (.01 * margin_of_error)
-            ceiling_value += ceiling_value * (.01 * margin_of_error)
-        if not floor_value <= color_value <= ceiling_value:
+    for x in range(len(to_compare)):
+        if not floor_color[x] <= to_compare[x] <= ceiling_color[x]:
             return False
     return True
 
 
-def compute_color_matches(config, results, margin_of_error=None, minimum_confidence=None):
+def compute_color_matches(config, results, minimum_confidence=None):
     color_relationships = {}
     for color in config["colors"]:
-        color_floor = config["colors"][color]["floor"]
-        color_ceiling = config["colors"][color]["ceiling"]
-        color_range = (color_floor, color_ceiling)
+        percentage = .01 * config["colors"][color]["variance"]
+        color_value = hex_to_rgb(config["colors"][color]["color"])
+        floor_color = []
+        ceiling_color = []
+        for value in color_value:
+            floor_color.append(math.floor(value - (value * percentage)))
+            ceiling_color.append(math.ceil(value + (value * percentage)))
         for result in results:
-            if color_is_in_range(result, color_range, margin_of_error):
+            if color_is_in_range(result, floor_color, ceiling_color):
                 if color in color_relationships:
                     color_relationships[result].append(color)
                 else:
