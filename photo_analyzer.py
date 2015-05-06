@@ -45,6 +45,11 @@ def main():
         print("{0} not found in configuration file".format(error))
         exit()
 
+    source_file_dir = configuration["file"].get("source_file_location")
+    if source_file_dir[:-1] == "/":
+        source_file = "{0}{1}".format(source_file_dir, source_file)
+    elif source_file_dir:
+        source_file = "{0}/{1}".format(source_file_dir, source_file)
     input_encoding = configuration["file"].get("encoding", "utf-8")
     output_format = configuration["file"].get("output_type", "html").lower()
     save_as = "{0}.{1}".format(configuration["file"].get("save_as", str(time.time())), output_format)
