@@ -35,35 +35,36 @@ def get_config_from_file(file_location="config.json"):
 
 
 def main():
-    configuration = get_config_from_file("config.json")
+    conf = get_config_from_file("config.json")
     try:
         # required parameters
-        source_file = configuration["file"]["source_file"]
-        photo_column = configuration["file"]["photo_info_column"]
-        colors = configuration["colors"]
+        source_file = conf["file"]["source_file"]
+        photo_column = conf["file"]["photo_info_column"]
+        id(conf["colors"])
     except KeyError as error:
         print("{0} not found in configuration file".format(error))
         exit()
 
-    source_file_dir = configuration["file"].get("source_file_location")
+    source_file_dir = conf["file"].get("source_file_location")
     if source_file_dir[:-1] == "/":
         source_file = "{0}{1}".format(source_file_dir, source_file)
     elif source_file_dir:
         source_file = "{0}/{1}".format(source_file_dir, source_file)
-    input_encoding = configuration["file"].get("encoding", "utf-8")
-    output_format = configuration["file"].get("output_type", "html").lower()
-    save_as = "{0}.{1}".format(configuration["file"].get("save_as", str(time.time())), output_format)
+    input_encoding = conf["file"].get("encoding", "utf-8")
+    output_format = conf["file"].get("output_type", "html").lower()
+    save_as = "{0}.{1}".format(conf["file"].get("save_as", str(time.time())), output_format)
 
-    cropped_folder = configuration["photos"].get("cropped_photo_dir", "cropped_photos").lower()
-    photo_destination_folder = configuration["photos"].get("base_photo_dir", "product_photos").lower()
-    crop_percentage = configuration["photos"].get("crop_percentage", 100)
-    k = configuration["results"].get("desired_analysis_clusters", 3)
-    minimum_confidence = configuration["results"].get("confidence_minimum", 0)
+    cropped_folder = conf["photos"].get("cropped_photo_dir", "cropped_photos").lower()
+    photo_destination_folder = conf["photos"].get("base_photo_dir", "product_photos").lower()
+    crop_percentage = conf["photos"].get("crop_percentage", 100)
+    k = conf["results"].get("desired_analysis_clusters", 3)
+    cropped_images_are_to_be_saved = conf["photos"].get("save_cropped_photos", True)
 
-    verbose = configuration.get("verbose", False)
-    debugging = configuration.get("debug", False)
-    cropped_images_are_to_be_saved = configuration["photos"].get("save_cropped_photos", True)
-    product_images_are_to_be_saved = configuration["photos"].get("save_full_photos", True)
+    # things to be implemented later.
+    minimum_confidence = conf["results"].get("confidence_minimum", 0)
+    verbose = conf.get("verbose", False)
+    debugging = conf.get("debug", False)
+    product_images_are_to_be_saved = conf["photos"].get("save_full_photos", True)
 
     try:
         os.mkdir(photo_destination_folder)
@@ -75,7 +76,7 @@ def main():
             reader = csv.DictReader(source)
             color_relationships = {}
             if output_format == "csv":
-                fieldnames = establish_csv_headers(configuration, reader.fieldnames)
+                fieldnames = establish_csv_headers(conf, reader.fieldnames)
                 writer = csv.DictWriter(output, fieldnames, lineterminator='\n')
                 writer.writeheader()
             if output_format == "html":
@@ -90,13 +91,16 @@ def main():
                 photo_retriever.retrieve_photos(photo_link, photo_path)
 
                 image = photo_functions.open_image(photo_path)
-                image = photo_functions.center_crop_image_by_percentage(image, crop_percentage)
+                image = photo_functions.center_crop_image_by_percentage(image,
+                                                                        crop_percentage)
                 if cropped_images_are_to_be_saved:
-                    photo_path = photo_path.replace(photo_destination_folder, cropped_folder)
+                    photo_path = photo_path.replace(photo_destination_folder,
+                                                    cropped_folder)
                     photo_functions.save_image(image, photo_path)
 
                 analysis_results = color_analysis.analyze_color(image, k)
-                relationship_result = color_analysis.compute_color_matches(configuration, analysis_results)
+                relationship_result = color_analysis.compute_color_matches(conf,
+                                                                           analysis_results)
                 computed_strategy_colors = []
                 for relationship in relationship_result:
                     for color in relationship_result[relationship]:
@@ -120,7 +124,9 @@ def main():
                     crop_widths.append(photo_functions.get_image_width(image))
                     results[photo_path] = analysis_results
             if output_format == "html":
-                html_output = result_page_builder.build_page(max(crop_widths) + 20, results, color_relationships)
+                html_output = result_page_builder.build_page(max(crop_widths) + 20,
+                                                             results,
+                                                             color_relationships)
                 output.write(html_output)
     except EnvironmentError:
         print("Something went awry.")
