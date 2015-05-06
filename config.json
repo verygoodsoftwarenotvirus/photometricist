@@ -20,31 +20,31 @@
   "colors": {
     "indigo": {
       "color": "#2A4389",
-      "variance": 10
+      "variance": 25
     },
     "sienna": {
       "color": "#A26342",
-      "variance": 10
+      "variance": 25
     },
     "orange": {
       "color": "#FFA500",
-      "variance": 10
+      "variance": 25
     },
     "purple": {
       "color": "#4B325D",
-      "variance": 10
+      "variance": 25
     },
     "red": {
       "color": "#7E0121",
-      "variance": 10
+      "variance": 25
     },
     "lime green": {
       "color": "#8FA152",
-      "variance": 10
+      "variance": 25
     },
     "denim": {
       "color": "#3C3D5D",
-      "variance": 10
+      "variance": 25
     }
   }
 }

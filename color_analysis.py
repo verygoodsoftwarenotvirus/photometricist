@@ -80,7 +80,7 @@ def k_means(points, k, min_diff):
 
 def color_is_in_range(to_compare, floor_color, ceiling_color):
     to_compare = hex_to_rgb(to_compare)
-    for x in range(len(to_compare)-1):
+    for x in range(len(to_compare)):
         if not floor_color[x] <= to_compare[x] <= ceiling_color[x]:
             return False
     return True
