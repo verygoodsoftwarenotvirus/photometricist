@@ -1,5 +1,6 @@
 {
   "debug": false,
+  "verbose": true,
   "file": {
     "encoding": "utf-8",
     "source_file": "before_color.csv",
@@ -10,6 +11,7 @@
   "photos": {
     "base_photo_dir": "product_photos",
     "cropped_photo_dir": "cropped_photos",
+    "save_full_photos": true,
     "save_cropped_photos": true,
     "crop_percentage": 75
   },

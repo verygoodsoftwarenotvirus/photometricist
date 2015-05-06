@@ -7,17 +7,33 @@
         html{
             background-color: #222;
             font-family: sans-serif;
-            color: white;
+            color: #FFFFFF;
+            text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+            height: 100%;
         }
-
+        
+        body{            
+            text-align: center;
+        }
+        
         #variance{
-            width: 2rem;
+            width: 6rem;
         }
 
+        #html5colorpicker{
+            width: 7rem;
+        }
+        
+        .info{
+            list-style: none;
+            display: inline;
+        }
+        
         .swatch{
-            margin: .5rem;
+            border: 1px solid white;
             width: 5rem;
             height: 5rem;
+            margin: .25rem auto;
         }
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
@@ -35,39 +51,72 @@
         function rgbToHex(r, g, b) {
             return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
         }
-
+        
+        function calculate_floor_color(input_color, percentage){
+            var floor_red = Math.min(Math.max(Math.floor(input_color.r - (input_color.r * (.01 * percentage))), 0), 255);
+            var floor_green = Math.min(Math.max(Math.floor(input_color.g - (input_color.g * (.01 * percentage))), 0), 255);
+            var floor_blue = Math.min(Math.max(Math.floor(input_color.b - (input_color.b * (.01 * percentage))), 0), 255);
+            
+            var floor_color = rgbToHex(floor_red, floor_green, floor_blue);
+            return floor_color
+        }
+        
+        function calculate_ceiling_color(input_color, percentage){
+            var ceiling_red = Math.min(Math.max(Math.ceil(input_color.r + (input_color.r * (.01 * percentage))), 0), 255);
+            var ceiling_green = Math.min(Math.max(Math.ceil(input_color.g + (input_color.g * (.01 * percentage))), 0), 255);
+            var ceiling_blue = Math.min(Math.max(Math.ceil(input_color.b + (input_color.b * (.01 * percentage))), 0), 255);
+            var ceiling_color = rgbToHex(ceiling_red, ceiling_green, ceiling_blue);
+            return ceiling_color
+        }
+        
         /* This is original */
         $(document).ready(function(){
-            $("#submit-button").click(function(){
-                var color = $("#hex-input").val().replace("#", "");
-                color = hexToRgb(color);
+            $(".info").hide()
+            
+            $("#html5colorpicker").change(function(){                
+                var color = $("#html5colorpicker").val();
                 var percentage = $("#variance").val() || 0;
+                var input_color = hexToRgb(color);
 
-                var floor_red = Math.min(Math.max(Math.floor(color.r - (color.r * (.01 * percentage))), 0), 255);
-                var floor_green = Math.min(Math.max(Math.floor(color.g - (color.g * (.01 * percentage))), 0), 255);
-                var floor_blue = Math.min(Math.max(Math.floor(color.b - (color.b * (.01 * percentage))), 0), 255);
+                var floor_color = calculate_floor_color(input_color, percentage);
+                var ceiling_color = calculate_ceiling_color(input_color, percentage);
 
-                var ceiling_red = Math.min(Math.max(Math.ceil(color.r + (color.r * (.01 * percentage))), 0), 255);
-                var ceiling_green = Math.min(Math.max(Math.ceil(color.g + (color.g * (.01 * percentage))), 0), 255);
-                var ceiling_blue = Math.min(Math.max(Math.ceil(color.b + (color.b * (.01 * percentage))), 0), 255);
+                $("html").css({background: "linear-gradient(" + floor_color + ", " + ceiling_color + ")"});
+                
+                $(".info").show()
+                $("#floor").css("background-color", floor_color).prop('title', floor_color);
+                $("#input").css("background-color", color).prop('title', color);
+                $("#ceiling").css("background-color", ceiling_color).prop('title', ceiling_color);
+                $("#hex-color").text(color.toUpperCase());
+                $("#percentage").text(percentage);
+            });
+            
+            $("#variance").change(function(){
+                var color = $("#html5colorpicker").val();
+                var percentage = $("#variance").val() || 0;
+                var input_color = hexToRgb(color);
+                var floor_color = calculate_floor_color(input_color, percentage);
+                var ceiling_color = calculate_ceiling_color(input_color, percentage);
 
-                var floor_color = rgbToHex(floor_red, floor_green, floor_blue);
-                var ceiling_color = rgbToHex(ceiling_red, ceiling_green, ceiling_blue);
-                var input_color = rgbToHex(color.r, color.g, color.b);
-
-                $("#floor").css("background-color", floor_color);
-                $("#input").css("background-color", input_color);
-                $("#ceiling").css("background-color", ceiling_color);
+                $("html").css({background: "linear-gradient(" + floor_color + ", " + ceiling_color + ")"});
+                $("#floor").css("background-color", floor_color).prop('title', floor_color);
+                $("#input").css("background-color", color).prop('title', color);
+                $("#ceiling").css("background-color", ceiling_color).prop('title', ceiling_color);
+                $("#percentage").text(percentage);
             });
         });
     </script>
 </head>
 <body>
-    <p>Color:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%</p>
-    <input type="text" id="hex-input" /> <input type="numeric" id="variance">
-    <p><button id="submit-button">Submit</button></p>
-    <div class="swatch" id="floor" title="floor"></div>
-    <div class="swatch" id="input" title="input"></div>
-    <div class="swatch" id="ceiling" title="ceiling"></div>
+    <p><input type="color" id="html5colorpicker" class="form-control" value="#DDDDDD"></p>
+    <p><input type="range" id="variance" min="0" max="100" step=".1">%</p>
+    <ul class="info">     
+        <li class="swatch" id="ceiling" title="ceiling"></li>
+        <li class="swatch" id="input" title="input"></li>
+        <li class="swatch" id="floor" title="floor"></li>
+    </ul>
+    <div class="info">
+        <span id="hex-color"></span>&nbsp;<span id="percentage"></span>%
+    </div>
 </body>
 </html>
