@@ -1,5 +1,5 @@
 {
-  "mode": "color detection",
+  "mode": "shape",
   "debug": false,
   "verbose": true,
   "file": {
