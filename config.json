@@ -1,49 +1,49 @@
 {
-  "mode": "color",
-  "debug": false,
-  "verbose": true,
-  "file": {
-    "source_file_location": "test_files",
-    "source_file": "before_color.csv",
-    "photo_info_column": "image_url",
-    "save_as": "output",
-    "output_type": "html"
-  },
-  "photos": {
-    "crop_percentage": 75
-  },
-  "results": {
-    "desired_analysis_clusters": 3,
-    "confidence_minimum": 50
-  },
-  "colors": {
-    "indigo": {
-      "color": "#2A4389",
-      "variance": 25
+    "mode": "color",
+    "debug": false,
+    "verbose": true,
+    "file": {
+        "source_file_location": "test_files",
+        "source_file": "before_color.csv",
+        "photo_info_column": "image_url",
+        "save_as": "output",
+        "output_type": "html"
     },
-    "sienna": {
-      "color": "#A26342",
-      "variance": 25
+    "photos": {
+        "crop_percentage": 75
     },
-    "orange": {
-      "color": "#FFA500",
-      "variance": 25
+    "results": {
+        "desired_analysis_clusters": 3,
+        "confidence_minimum": 50
     },
-    "purple": {
-      "color": "#4B325D",
-      "variance": 25
-    },
-    "red": {
-      "color": "#7E0121",
-      "variance": 25
-    },
-    "lime green": {
-      "color": "#8FA152",
-      "variance": 25
-    },
-    "denim": {
-      "color": "#3C3D5D",
-      "variance": 25
+    "colors": {
+        "indigo": {
+            "color": "#2A4389",
+            "variance": 38
+        },
+        "sienna": {
+            "color": "#A26342",
+            "variance": 32
+        },
+        "orange": {
+            "color": "#FFA500",
+            "variance": 29
+        },
+        "purple": {
+            "color": "#4B325D",
+            "variance": 41
+        },
+        "red": {
+            "color": "#7E0121",
+            "variance": 49
+        },
+        "lime green": {
+            "color": "#8FA152",
+            "variance": 45
+        },
+        "denim": {
+            "color": "#3C3D5D",
+            "variance": 27
+        }
     }
-  }
 }
