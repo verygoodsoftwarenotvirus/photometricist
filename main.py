@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import shutil
 import color_analysis
 import photo_retriever
 from html_results_page_builder import build_results_page
@@ -41,20 +42,28 @@ def ensure_valid_configuration(cfg):
     conf["photo_destination_folder"] = cfg["photos"].get("base_photo_dir", "product_photos").lower()
     conf["crop_percentage"] = cfg["photos"].get("crop_percentage", 100)
     conf["k"] = cfg["results"].get("desired_analysis_clusters", 3)
-    conf["cropped_images_are_to_be_saved"] = cfg["photos"].get("save_cropped_photos", True)
+    conf["save_product_photos"] = cfg["photos"].get("save_product_photos", False)
+    conf["save_cropped_photos"] = cfg["photos"].get("save_cropped_photos", False)
 
     # things to be implemented later.
     conf["minimum_confidence"] = cfg["results"].get("confidence_minimum", 0)
     conf["verbose"] = cfg.get("verbose", False)
     conf["debugging"] = cfg.get("debug", False)
-
     return conf
+
+
+def remove_folders_if_necessary(conf, folders):
+    if not conf["save_product_photos"]:
+        folders.remove(conf["photo_destination_folder"])
+    if not conf["save_product_photos"]:
+        folders.remove(conf["cropped_folder"])
+    for folder in folders:
+        shutil.rmtree(folder, ignore_errors=True)
 
 
 def main():
     conf = ensure_valid_configuration(get_config_from_file("config.json"))
     folders = [conf["photo_destination_folder"], conf["cropped_folder"]]
-
     for folder in folders:
         try:
             os.mkdir(folder)
@@ -67,8 +76,7 @@ def main():
         with open(conf["save_as"], "w") as output:
             html_output = build_results_page(analysis_results)
             output.write(html_output)
-        for folder in folders:
-            os.rmdir(folder)
+        remove_folders_if_necessary(conf, folders)
     elif conf["app_mode"].lower() == "shape":
         # TODO: implement this feature somewhere/how.
         pass
