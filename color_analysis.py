@@ -4,13 +4,6 @@ import photo_functions
 from collections import namedtuple
 from webcolors import rgb_to_hex, hex_to_rgb
 
-"""
-    This code is either stolen and modified or inpired by:
-     http://charlesleifer.com/blog/using-python-and-k-means-to-find-the-dominant-colors-in-images/
-
-    ...depending on your perspective.
-"""
-
 Point = namedtuple('Point', ('coords', 'n', 'ct'))
 Cluster = namedtuple('Cluster', ('points', 'center', 'n'))
 
@@ -73,10 +66,6 @@ def k_means(points, k, min_diff):
         if diff < min_diff:
             break
     return clusters
-
-"""
-    Everything beyond here is my own code
-"""
 
 
 def color_is_in_range(to_compare, floor_color, ceiling_color):
