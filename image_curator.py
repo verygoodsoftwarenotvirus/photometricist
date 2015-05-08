@@ -107,7 +107,10 @@ def tidy_up(conf, folders):
         except OSError:
             logging.info("Unable to delete folder: {0}".format(folder))
     if not conf["verbose"]:
-        os.remove("image_curator.log")
+        try:
+            os.remove("image_curator.log")
+        except FileNotFoundError:
+            pass
 
 
 def main():
@@ -132,7 +135,6 @@ def main():
         logging.info("HTML file created.")
         tidy_up(conf, folders)
     elif conf["app_mode"].lower() == "shape":
-        # TODO: implement this feature somewhere/how.
         pass
     else:
         raise ValueError("Application mode '{0}' invalid.".format(conf["app_mode"]))
