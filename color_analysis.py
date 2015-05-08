@@ -96,30 +96,30 @@ def compute_color_matches(config, results, minimum_confidence=None):
 
 
 def analyze_colors(conf, photos):
-        results = {}
-        crop_widths = []
-        for photo_path in photos:
-            crop_percentage = conf["crop_percentage"]
-            photo_folder = conf["photo_destination_folder"]
-            cropped_folder = conf["cropped_folder"]
-            image = photo_functions.crop_and_save_photo(photo_path, crop_percentage,
-                                                        photo_folder, cropped_folder)
+    results = {}
+    crop_widths = []
+    for photo_path in photos:
+        crop_percentage = conf["crop_percentage"]
+        photo_folder = conf["photo_destination_folder"]
+        cropped_folder = conf["cropped_folder"]
+        image = photo_functions.crop_and_save_photo(photo_path, crop_percentage,
+                                                    photo_folder, cropped_folder)
 
-            cropped_photo_path = photo_path.replace(conf["photo_destination_folder"], conf["cropped_folder"])
-            computed_colors = analyze_color(image, conf["k"])
-            color_relationship = compute_color_matches(conf, computed_colors)
-            # encoding adds some junk on the sides.
-            b64_encoded = str(photo_functions.base64_encode_image(cropped_photo_path))[2:-1]
-            photo_extension = photo_path[photo_path.rfind(".") + 1:]
-            if photo_extension == "jpg":
-                photo_extension = "jpeg"
-            b64_prefix = "data:image/{0};base64,".format(photo_extension)
-            image_encoding = "{0}{1}".format(b64_prefix, b64_encoded)
-            crop_widths.append(photo_functions.get_image_width(image))
+        cropped_photo_path = photo_path.replace(conf["photo_destination_folder"], conf["cropped_folder"])
+        computed_colors = analyze_color(image, conf["k"])
+        color_relationship = compute_color_matches(conf, computed_colors)
+        # encoding adds some junk on the sides.
+        b64_encoded = str(photo_functions.base64_encode_image(cropped_photo_path))[2:-1]
+        photo_extension = photo_path[photo_path.rfind(".") + 1:]
+        if photo_extension == "jpg":
+            photo_extension = "jpeg"
+        b64_prefix = "data:image/{0};base64,".format(photo_extension)
+        image_encoding = "{0}{1}".format(b64_prefix, b64_encoded)
+        crop_widths.append(photo_functions.get_image_width(image))
 
-            result = {"computed_colors": computed_colors,
-                      "color_relationship": color_relationship,
-                      "image_encoding": image_encoding}
-            results[photo_path] = result
-        results["crop_width"] = max(crop_widths) + 20
-        return results
+        result = {"computed_colors": computed_colors,
+                  "color_relationship": color_relationship,
+                  "image_encoding": image_encoding}
+        results[photo_path] = result
+    results["crop_width"] = max(crop_widths) + 20
+    return results
