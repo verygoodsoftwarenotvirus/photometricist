@@ -1,12 +1,9 @@
 import os
 import json
 import time
-import csv_output
 import color_analysis
 import photo_retriever
 from html_results_page_builder import build_results_page
-
-FIVE_AMPS = "&&&&&"
 
 
 def get_config_from_file(file_location="config.json"):
@@ -56,11 +53,13 @@ def ensure_valid_configuration(cfg):
 
 def main():
     conf = ensure_valid_configuration(get_config_from_file("config.json"))
-    try:
-        os.mkdir(conf["photo_destination_folder"])
-        os.mkdir(conf["cropped_folder"])
-    except FileExistsError:
-        pass
+    folders = [conf["photo_destination_folder"], conf["cropped_folder"]]
+
+    for folder in folders:
+        try:
+            os.mkdir(folder)
+        except FileExistsError:
+            pass
 
     if conf["app_mode"].lower() == "color":
         photos = photo_retriever.retrieve_photos_from_file(conf)
@@ -68,7 +67,10 @@ def main():
         with open(conf["save_as"], "w") as output:
             html_output = build_results_page(analysis_results)
             output.write(html_output)
+        for folder in folders:
+            os.rmdir(folder)
     elif conf["app_mode"].lower() == "shape":
+        # TODO: implement this feature somewhere/how.
         pass
     else:
         raise ValueError("Application mode '{0}' invalid.".format(conf["app_mode"]))
