@@ -95,7 +95,7 @@ def compute_color_matches(config, results, minimum_confidence=None):
     return color_relationships
 
 
-def analyze_colors(conf, photos):
+def analyze_image_colors(conf, photos):
     results = {}
     crop_widths = []
     for photo_path in photos:
