@@ -8,8 +8,8 @@ def output_csv(conf):
     with open(conf["source_file"], encoding=conf["input_encoding"]) as source, \
             open(conf["save_as"], "w") as output:
         color_relationships = {}
-        reader = csv.DictReader(conf["file"]["source_file"])
-        photo_column = conf["file"].get("photo_info_column")
+        reader = csv.DictReader(source)
+        photo_column = conf["photo_column"]
         fieldnames = []
         if "sku" in [column.lower() for column in reader.fieldnames]:
             fieldnames.append('sku')
