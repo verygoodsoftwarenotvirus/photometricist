@@ -31,10 +31,10 @@ def create_photo_thumbnail(image, size=300):
     return image.thumbnail((size, size))
 
 
-def crop_and_save_photo(photo_path, crop_percentage, photo_destination_folder, cropped_folder):
+def crop_and_save_photo(photo_path, crop_percentage, photo_folder, cropped_folder):
     image = open_image(photo_path)
     image = center_crop_image_by_percentage(image, crop_percentage)
-    photo_path = photo_path.replace(photo_destination_folder, cropped_folder)
+    photo_path = photo_path.replace(photo_folder, cropped_folder)
     save_image(image, photo_path)
     return image
 
