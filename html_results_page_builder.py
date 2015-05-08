@@ -1,3 +1,6 @@
+import logging
+
+
 page_template = """
 <html>
     <head>
@@ -70,9 +73,11 @@ def build_result(image_link, swatches):
 
 
 def build_results_page(analysis_results):
+    logging.info("Begun results page construction")
     output = ""
     crop_width = analysis_results.pop("crop_width")
     for result in analysis_results:
+        logging.info("Building elements for {0}".format(result))
         image = analysis_results[result]
         swatches = build_swatches(image["computed_colors"], image["color_relationship"])
         output += build_result(image["image_encoding"], swatches)

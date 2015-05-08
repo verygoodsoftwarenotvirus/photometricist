@@ -1,7 +1,7 @@
 {
     "mode": "color",
     "debug": false,
-    "verbose": true,
+    "verbose": false,
     "file": {
         "source_file_location": "test_files",
         "source_file": "before_color.csv",
@@ -39,7 +39,7 @@
         },
         "lime green": {
             "color": "#8FA152",
-            "variance": 45
+            "variance": 40
         },
         "denim": {
             "color": "#3C3D5D",
