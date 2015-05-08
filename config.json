@@ -35,11 +35,11 @@
         },
         "red": {
             "color": "#7E0121",
-            "variance": 49
+            "variance": 50
         },
         "lime green": {
             "color": "#8FA152",
-            "variance": 40
+            "variance": 30
         },
         "denim": {
             "color": "#3C3D5D",

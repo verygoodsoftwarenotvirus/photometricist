@@ -3,13 +3,21 @@ import json
 import time
 import shutil
 import logging
+import argparse
 import color_analysis
 import photo_retriever
 from html_results_page_builder import build_results_page
 
 
-def establish_logger():
-    conf = get_config_from_file("config.json")
+def establish_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--config", dest="config_file", default="config.json",
+                        help="Configuration file, in JSON format.")
+    return parser.parse_args()
+
+
+def establish_logger(arguments):
+    conf = get_config_from_file(arguments.config_file)
     if conf.get("verbose", False):
         logging.info("Logging established.")
         logging.basicConfig(level=logging.INFO,
@@ -140,7 +148,8 @@ def main():
         raise ValueError("Application mode '{0}' invalid.".format(conf["app_mode"]))
 
 if __name__ == "__main__":
-    establish_logger()
+    args = establish_arguments()
+    establish_logger(args)
     start_time = time.time()
     logging.info("Script started.")
     main()
