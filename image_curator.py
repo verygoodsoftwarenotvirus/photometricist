@@ -6,7 +6,7 @@ import logging
 import argparse
 import color_analysis
 import photo_retriever
-from html_results_page_builder import build_results_page
+import html_results_page
 
 
 def establish_arguments():
@@ -138,7 +138,7 @@ def main():
         logging.info("Collected {0} photos".format(len(photos)))
         analysis_results = color_analysis.analyze_image_colors(conf, photos)
         with open(conf["save_as"], "w") as output:
-            html_output = build_results_page(analysis_results)
+            html_output = html_results_page.builder(analysis_results)
             output.write(html_output)
         logging.info("HTML file created.")
         tidy_up(conf, folders)

@@ -72,7 +72,7 @@ def build_result(image_link, swatches):
            """.format(image_link, swatches)
 
 
-def build_results_page(analysis_results):
+def builder(analysis_results):
     logging.info("Begun results page construction")
     output = ""
     crop_width = analysis_results.pop("crop_width")
