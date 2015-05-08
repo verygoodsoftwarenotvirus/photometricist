@@ -1,5 +1,4 @@
 import csv
-import time
 import requests
 
 
@@ -10,15 +9,15 @@ def retrieve_photo(photo_url, target_file_name):
             f.write(chunk)
 
 
-def retrieve_photos_from_file(source_file, encoding, photo_column, dest_folder=str(time.time())):
+def retrieve_photos_from_file(conf):
     downloaded_photo_paths = []
-    with open(source_file, encoding=encoding) as source:
+    with open(conf["source_file"], encoding=conf["input_encoding"]) as source:
         reader = csv.DictReader(source)
         for row in reader:
-            photo_link = row[photo_column]
+            photo_link = row[conf["photo_column"]]
             if not photo_link:
                 continue
-            photo_path = "{0}{1}".format(dest_folder,
+            photo_path = "{0}{1}".format(conf["photo_destination_folder"],
                                          photo_link[photo_link.rfind("/"):photo_link.rfind("?")])
             retrieve_photo(photo_link, photo_path)
             downloaded_photo_paths.append(photo_path)
