@@ -2,8 +2,9 @@ import os
 import json
 import time
 import csv_output
-import html_output
+import color_analysis
 import photo_retriever
+from html_results_page_builder import build_results_page
 
 FIVE_AMPS = "&&&&&"
 
@@ -62,11 +63,11 @@ def main():
         pass
 
     if conf["app_mode"].lower() == "color":
-        if conf["output_format"].lower() == "csv":
-            csv_output.output_csv(conf)
-        elif conf["output_format"].lower() == "html":
-            photos = photo_retriever.retrieve_photos_from_file(conf)
-            html_output.output_html(conf, photos)
+        photos = photo_retriever.retrieve_photos_from_file(conf)
+        analysis_results = color_analysis.analyze_colors(conf, photos)
+        with open(conf["save_as"], "w") as output:
+            html_output = build_results_page(analysis_results)
+            output.write(html_output)
     elif conf["app_mode"].lower() == "shape":
         pass
     else:

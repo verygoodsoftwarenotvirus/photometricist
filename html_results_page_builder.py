@@ -69,9 +69,11 @@ def build_result(image_link, swatches):
            """.format(image_link, swatches)
 
 
-def build_page(crop_width, analysis_results, color_relationships):
-    result = ""
-    for image in analysis_results:
-        swatches = build_swatches(analysis_results[image], color_relationships)
-        result += build_result(image, swatches)
-    return page_template.format(crop_width=crop_width, products=result)
+def build_results_page(analysis_results):
+    output = ""
+    crop_width = analysis_results.pop("crop_width")
+    for result in analysis_results:
+        image = analysis_results[result]
+        swatches = build_swatches(image["computed_colors"], image["color_relationship"])
+        output += build_result(image["image_encoding"], swatches)
+    return page_template.format(crop_width=crop_width, products=output)
