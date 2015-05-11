@@ -136,10 +136,15 @@ def main():
         logging.info("Analyzing color")
         photos = photo_retriever.retrieve_photos_from_file(conf)
         logging.info("Collected {0} photos".format(len(photos)))
+        # TODO: investigate HSL comparison vs. RGB comparison.
         analysis_results = color_analysis.analyze_image_colors(conf, photos)
         with open(conf["save_as"], "w") as output:
-            html_output = html_results_page.builder(analysis_results)
-            output.write(html_output)
+            if conf["output_format"].lower() == "html":
+                html_output = html_results_page.builder(analysis_results)
+                output.write(html_output)
+            elif conf["output_format"].lower() == "csv":
+                # TODO: implement CSV output...again.
+                pass
         logging.info("HTML file created.")
         tidy_up(conf, folders)
     elif conf["app_mode"].lower() == "shape":
