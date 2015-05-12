@@ -8,6 +8,11 @@ __pycache__/
 # OSX junk
 .DS_Store/
 
+# Project stuff
+output.html
+cropped_photos/
+product_photos/
+
 # C extensions
 *.so
 
