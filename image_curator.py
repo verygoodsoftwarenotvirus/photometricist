@@ -1,12 +1,13 @@
 import os
+import csv
 import json
 import time
 import shutil
 import logging
 import argparse
 import color_analysis
-import photo_retriever
 import html_results_page
+import analysis_objects
 
 
 def establish_arguments():
@@ -51,7 +52,6 @@ def log_configuration_values(conf):
         logging.info("Product photos will be discarded")
 
 
-
 def get_config_from_file(file_location="config.json"):
     try:
         with open(file_location) as config_file:
@@ -67,6 +67,7 @@ def ensure_valid_configuration(cfg):
     try:  # required parameters
         conf["app_mode"] = cfg["mode"]
         conf["source_file"] = cfg["file"]["source_file"]
+        conf["sku_column"] = cfg["file"]["sku_column"]
         conf["photo_column"] = cfg["file"]["photo_info_column"]
         conf["colors"] = cfg["colors"]
     except KeyError as error:
@@ -101,6 +102,21 @@ def ensure_valid_configuration(cfg):
     return conf
 
 
+def retrieve_photos_from_file(conf):
+    products = []
+    with open(conf["source_file"], encoding=conf["input_encoding"]) as source:
+        reader = csv.DictReader(source)
+        for row in reader:
+            product = analysis_objects.Product()
+            product.sku = row[conf["sku_column"]]
+            product.photo_url = row[conf["photo_column"]]
+            if not product.photo_url:
+                continue
+            product.retrieve_photo(conf["photo_destination_folder"])
+            products.append(product)
+    return products
+
+
 def tidy_up(conf, folders):
     if conf["save_product_photos"]:
         logging.info("Removing downloaded files")
@@ -122,6 +138,11 @@ def tidy_up(conf, folders):
 
 
 def main():
+    args = establish_arguments()
+    establish_logger(args)
+    start_time = time.time()
+    logging.info("Script started.")
+
     conf = ensure_valid_configuration(get_config_from_file("config.json"))
     logging.info("Configuration file successfully loaded.")
     folders = [conf["photo_destination_folder"], conf["cropped_folder"]]
@@ -134,10 +155,10 @@ def main():
 
     if conf["app_mode"].lower() == "color":
         logging.info("Analyzing color")
-        photos = photo_retriever.retrieve_photos_from_file(conf)
-        logging.info("Collected {0} photos".format(len(photos)))
+        products = retrieve_photos_from_file(conf)
+        logging.info("Collected {0} products".format(len(products)))
         # TODO: investigate HSL comparison vs. RGB comparison.
-        analysis_results = color_analysis.analyze_image_colors(conf, photos)
+        analysis_results = color_analysis.analyze_image_colors(conf, products)
         with open(conf["save_as"], "w") as output:
             if conf["output_format"].lower() == "html":
                 html_output = html_results_page.builder(analysis_results)
@@ -148,16 +169,13 @@ def main():
         logging.info("HTML file created.")
         tidy_up(conf, folders)
     elif conf["app_mode"].lower() == "shape":
-        pass
+        raise ValueError("Shape analysis not yet supported.")
     else:
         raise ValueError("Application mode '{0}' invalid.".format(conf["app_mode"]))
 
-if __name__ == "__main__":
-    args = establish_arguments()
-    establish_logger(args)
-    start_time = time.time()
-    logging.info("Script started.")
-    main()
     end_time = time.time()
     run_time = end_time - start_time
     logging.info("Script completed in {0}".format(run_time))
+
+if __name__ == "__main__":
+    main()

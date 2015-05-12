@@ -1,6 +1,5 @@
 import math
 import random
-import photo_functions
 from collections import namedtuple
 from webcolors import rgb_to_hex, hex_to_rgb
 
@@ -95,31 +94,21 @@ def compute_color_matches(config, results, minimum_confidence=None):
     return color_relationships
 
 
-def analyze_image_colors(conf, photos):
+def analyze_image_colors(conf, products):
     results = {}
     crop_widths = []
-    for photo_path in photos:
+    for product in products:
         crop_percentage = conf["crop_percentage"]
         photo_folder = conf["photo_destination_folder"]
         cropped_folder = conf["cropped_folder"]
-        image = photo_functions.crop_and_save_photo(photo_path, crop_percentage,
-                                                    photo_folder, cropped_folder)
-
-        cropped_photo_path = photo_path.replace(conf["photo_destination_folder"], conf["cropped_folder"])
-        computed_colors = analyze_color(image, conf["k"])
-        color_relationship = compute_color_matches(conf, computed_colors)
-        # encoding adds some junk on the sides.
-        b64_encoded = str(photo_functions.base64_encode_image(cropped_photo_path))[2:-1]
-        photo_extension = photo_path[photo_path.rfind(".") + 1:]
-        if photo_extension == "jpg":
-            photo_extension = "jpeg"
-        b64_prefix = "data:image/{0};base64,".format(photo_extension)
-        image_encoding = "{0}{1}".format(b64_prefix, b64_encoded)
-        crop_widths.append(photo_functions.get_image_width(image))
-
-        result = {"computed_colors": computed_colors,
-                  "color_relationship": color_relationship,
-                  "image_encoding": image_encoding}
-        results[photo_path] = result
+        product.photo.crop_and_save_photo(crop_percentage, photo_folder, cropped_folder)
+        product.photo.computed_colors = analyze_color(product.photo.image, conf["k"])
+        product.photo.strategy_color_matches = compute_color_matches(conf, product.photo.computed_colors)
+        product.photo.base64_encode()
+        crop_widths.append(product.photo.cropped_width)
+        result = {"computed_colors": product.photo.computed_colors,
+                  "color_relationship": product.photo.strategy_color_matches,
+                  "image_encoding": product.photo.base64_encoding}
+        results[product] = result
     results["crop_width"] = max(crop_widths) + 20
     return results
