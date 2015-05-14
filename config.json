@@ -1,5 +1,6 @@
 {
     "mode": "color",
+    "debug": true,
     "verbose": false,
     "file": {
         "source_file_location": "test_files",

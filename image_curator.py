@@ -6,8 +6,9 @@ import shutil
 import logging
 import argparse
 import color_analysis
-import html_results_page
+import product_database
 import analysis_objects
+import html_results_page
 
 
 def establish_arguments():
@@ -109,6 +110,7 @@ def retrieve_photos_from_file(conf):
         for row in reader:
             product = analysis_objects.Product()
             product.sku = row[conf["sku_column"]]
+            product_database.write_sku_to_db(product.sku)
             product.photo_url = row[conf["photo_column"]]
             if not product.photo_url:
                 continue
@@ -145,34 +147,42 @@ def main():
 
     conf = ensure_valid_configuration(get_config_from_file("config.json"))
     logging.info("Configuration file successfully loaded.")
-    folders = [conf["photo_destination_folder"], conf["cropped_folder"]]
-    for folder in folders:
-        try:
-            os.mkdir(folder)
-            logging.info("Created folder: {0}".format(folder))
-        except FileExistsError:
-            pass
 
-    if conf["app_mode"].lower() == "color":
-        logging.info("Analyzing color")
-        products = retrieve_photos_from_file(conf)
-        logging.info("Collected {0} products".format(len(products)))
-        # TODO: investigate HSL comparison vs. RGB comparison.
-        analysis_results = color_analysis.analyze_image_colors(conf, products)
-        with open(conf["save_as"], "w") as output:
-            if conf["output_format"].lower() == "html":
-                html_output = html_results_page.builder(analysis_results)
-                output.write(html_output)
-            elif conf["output_format"].lower() == "csv":
-                # TODO: implement CSV output...again.
-                pass
-        logging.info("HTML file created.")
-        tidy_up(conf, folders)
-    elif conf["app_mode"].lower() == "shape":
-        raise ValueError("Shape analysis not yet supported.")
+    if conf["debugging"]:
+        with open(conf["source_file"], encoding=conf["input_encoding"]) as source:
+            reader = csv.DictReader(source)
+            for row in reader:
+                product = analysis_objects.Product()
+                product.sku = row[conf["sku_column"]]
+                product_database.write_procut_to_db(product.sku)
     else:
-        raise ValueError("Application mode '{0}' invalid.".format(conf["app_mode"]))
+        folders = [conf["photo_destination_folder"], conf["cropped_folder"]]
+        for folder in folders:
+            try:
+                os.mkdir(folder)
+                logging.info("Created folder: {0}".format(folder))
+            except FileExistsError:
+                pass
 
+        if conf["app_mode"].lower() == "color":
+            logging.info("Analyzing color")
+            products = retrieve_photos_from_file(conf)
+            logging.info("Collected {0} products".format(len(products)))
+            # TODO: investigate HSL comparison vs. RGB comparison.
+            analysis_results = color_analysis.analyze_image_colors(conf, products)
+            with open(conf["save_as"], "w") as output:
+                if conf["output_format"].lower() == "html":
+                    html_output = html_results_page.builder(analysis_results)
+                    output.write(html_output)
+                    logging.info("HTML file created.")
+                elif conf["output_format"].lower() == "csv":
+                    # TODO: implement CSV output...again.
+                    pass
+        elif conf["app_mode"].lower() == "shape":
+            raise ValueError("Shape analysis not yet supported.")
+        else:
+            raise ValueError("Application mode '{0}' invalid.".format(conf["app_mode"]))
+        tidy_up(conf, folders)
     end_time = time.time()
     run_time = end_time - start_time
     logging.info("Script completed in {0}".format(run_time))
