@@ -6,7 +6,6 @@ import shutil
 import logging
 import argparse
 import color_analysis
-import product_database
 import analysis_objects
 import html_results_page
 
@@ -92,7 +91,7 @@ def ensure_valid_configuration(cfg):
     conf["photo_destination_folder"] = cfg["photos"].get("base_photo_dir", "product_photos").lower()
     conf["save_product_photos"] = cfg["photos"].get("save_product_photos", False)
     conf["save_cropped_photos"] = cfg["photos"].get("save_cropped_photos", False)
-    conf["color_mode"] = cfg["colors"].get("mode", "RGB").upper()
+    conf["color_mode"] = cfg["results"].get("color_mode", "RGB").upper()
 
     valid_color_modes = ["RGBA", "RGB", "HSL"]
     if conf["color_mode"].upper() == "RGBA":
@@ -156,14 +155,7 @@ def main():
     logging.info("Configuration file successfully loaded.")
 
     if conf["debugging"]:
-        with open(conf["source_file"], encoding=conf["input_encoding"]) as source:
-            reader = csv.DictReader(source)
-            for row in reader:
-                product = analysis_objects.Product()
-                product.sku = row[conf["sku_column"]]
-                product.title = row["title"]
-                product.photo_url = row[conf["photo_column"]]
-                product_database.write_product_to_db(product.__dict__)
+        pass
     else:
         folders = [conf["photo_destination_folder"], conf["cropped_folder"]]
         for folder in folders:

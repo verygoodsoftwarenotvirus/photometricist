@@ -1,5 +1,6 @@
 import math
 import random
+import product_database
 from collections import namedtuple
 from webcolors import rgb_to_hex, hex_to_rgb
 
@@ -117,6 +118,7 @@ def analyze_image_colors(conf, products):
         result = {"computed_colors": product.photo.computed_colors,
                   "color_relationship": product.photo.strategy_color_matches,
                   "image_encoding": product.photo.base64_encoding}
-        results[product] = result
+        results[product.sku] = result
     results["crop_width"] = max(crop_widths) + 20
     return results
+
