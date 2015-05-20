@@ -48,7 +48,7 @@ def log_configuration_values(conf):
         logging.info("Cropped photos will be discarded")
 
     if conf["save_product_photos"]:
-        logging.info("Product photos will be saved in {0}.".format(conf["product_folder"]))
+        logging.info("Product photos will be saved in {0}.".format(conf["photo_destination_folder"]))
     else:
         logging.info("Product photos will be discarded")
 
@@ -92,6 +92,13 @@ def ensure_valid_configuration(cfg):
     conf["photo_destination_folder"] = cfg["photos"].get("base_photo_dir", "product_photos").lower()
     conf["save_product_photos"] = cfg["photos"].get("save_product_photos", False)
     conf["save_cropped_photos"] = cfg["photos"].get("save_cropped_photos", False)
+    conf["color_mode"] = cfg["colors"].get("mode", "RGB").upper()
+
+    valid_color_modes = ["RGBA", "RGB", "HSL"]
+    if conf["color_mode"].upper() == "RGBA":
+        conf["color_mode"] = "RGB"
+    if conf["color_mode"].upper() not in valid_color_modes:
+        raise ValueError("Invalid color mode specified, the acceptable values are RGB and HSL.")
 
     # things to be implemented later.
     conf["minimum_confidence"] = cfg["results"].get("confidence_minimum", 0)
@@ -110,7 +117,7 @@ def retrieve_photos_from_file(conf):
         for row in reader:
             product = analysis_objects.Product()
             product.sku = row[conf["sku_column"]]
-            product_database.write_sku_to_db(product.sku)
+            # product_database.write_sku_to_db(product.sku)
             product.photo_url = row[conf["photo_column"]]
             if not product.photo_url:
                 continue
@@ -154,7 +161,9 @@ def main():
             for row in reader:
                 product = analysis_objects.Product()
                 product.sku = row[conf["sku_column"]]
-                product_database.write_procut_to_db(product.sku)
+                product.title = row["title"]
+                product.photo_url = row[conf["photo_column"]]
+                product_database.write_product_to_db(product.__dict__)
     else:
         folders = [conf["photo_destination_folder"], conf["cropped_folder"]]
         for folder in folders:
