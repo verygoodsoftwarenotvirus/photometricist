@@ -67,7 +67,7 @@ def k_means(points, k, min_diff):
     return clusters
 
 
-def color_is_in_range(to_compare, floor_color, ceiling_color):
+def color_is_in_rgb_range(to_compare, floor_color, ceiling_color):
     to_compare = hex_to_rgb(to_compare)
     for x in range(len(to_compare)):
         if not floor_color[x] <= to_compare[x] <= ceiling_color[x]:
@@ -77,21 +77,29 @@ def color_is_in_range(to_compare, floor_color, ceiling_color):
 
 def compute_color_matches(config, results, minimum_confidence=None):
     color_relationships = {}
-    for color in config["colors"]:
-        percentage = .01 * config["colors"][color]["variance"]
-        color_value = hex_to_rgb(config["colors"][color]["color"])
-        floor_color = []
-        ceiling_color = []
-        for value in color_value:
-            floor_color.append(math.floor(value - (value * percentage)))
-            ceiling_color.append(math.ceil(value + (value * percentage)))
-        for result in results:
-            if color_is_in_range(result, floor_color, ceiling_color):
-                if color in color_relationships:
-                    color_relationships[result].append(color)
-                else:
-                    color_relationships[result] = [color]
-    return color_relationships
+    if config["color_mode"].upper() == "RGB":
+        for color in config["colors"]:
+            percentage = .01 * config["colors"][color]["variance"]
+            color_value = hex_to_rgb(config["colors"][color]["color"])
+            floor_color = []
+            ceiling_color = []
+            for value in color_value:
+                floor_color.append(math.floor(value - (value * percentage)))
+                ceiling_color.append(math.ceil(value + (value * percentage)))
+            for result in results:
+                if color_is_in_rgb_range(result, floor_color, ceiling_color):
+                    if color in color_relationships:
+                        color_relationships[result].append(color)
+                    else:
+                        color_relationships[result] = [color]
+        return color_relationships
+    elif config["color_mode"].upper() == "HSL":
+        for color in config["colors"]:
+            hue = config["colors"][color]["hue"]
+            saturation = config["colors"][color]["saturation"]
+            lightness = config["colors"][color]["value"]
+            variance = config["colors"][color]["variance"]
+
 
 
 def analyze_image_colors(conf, products):
