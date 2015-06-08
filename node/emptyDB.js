@@ -1,4 +1,4 @@
-var Mongo = require("mongodb").MongoClient ,
+var Mongo = require("mongodb").MongoClient,
     assert = require('assert');
 
 var dbUrl = "mongodb://localhost:27017/local";
