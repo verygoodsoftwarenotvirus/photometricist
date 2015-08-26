@@ -1,0 +1,52 @@
+"Black": {
+    "color": "#191818",
+    "variance": 100
+},
+"Brown": {
+    "color": "#795000",
+    "variance": 36
+},
+"Blue": {
+    "color": "#3F4AFF",
+    "variance": 46
+},
+"Gold": {
+    "color": "#C1B000",
+    "variance": 15
+},
+"Gray": {
+    "color": "#7D7C7A",
+    "variance": 100
+},
+"Green": {
+    "color": "#1CBD2A",
+    "variance": 73
+},
+"Orange": {
+    "color": "#C27B13",
+    "variance": 47
+},
+"Pink": {
+    "color": "#FFBECC",
+    "variance": 18
+},
+"Purple": {
+    "color": "#9E4DFF",
+    "variance": 29
+},
+"Red": {
+    "color": "#FF260C",
+    "variance": 63
+},
+"Tan": {
+    "color": "#D18D12",
+    "variance": 12
+},
+"White": {
+    "color": "#FFFDF7",
+    "variance": 4
+},
+"Yellow": {
+    "color": "#FFF000",
+    "variance": 18
+}
