@@ -10,12 +10,21 @@ import (
     "net/http"
     "math/rand"
     "image/color"
-
-    // "reflect"
 )
 
 import _ "image/jpeg"
 import _ "image/png"
+
+type DefinedColor struct{
+    hex string
+    variance float32
+}
+
+func readColorConfig(configLocation string)(definedColors map[string]DefinedColor){
+    var colors make(map[string]DefinedColor)
+
+
+}
 
 func downloadImageFromUrl(url string, saveAs string)(error error){
     response, err := http.Get(url)
@@ -152,6 +161,10 @@ func main(){
     saveAs := "sample.png"
     _ := "sample_images/red.png"
     k := 5
+    
+    jsonParser := json.NewDecoder(configFile)
+    err = jsonParser.Decode(&DefinedColor)
+    closeIfError(err)
 
     err := downloadImageFromUrl(url, saveAs)
     closeIfError(err)
