@@ -1,52 +1,52 @@
 "Black": {
     "color": "#191818",
-    "variance": 100
+    "variance": 100.0
 },
 "Brown": {
     "color": "#795000",
-    "variance": 36
+    "variance": 36.0
 },
 "Blue": {
     "color": "#3F4AFF",
-    "variance": 46
+    "variance": 46.0
 },
 "Gold": {
     "color": "#C1B000",
-    "variance": 15
+    "variance": 15.0
 },
 "Gray": {
     "color": "#7D7C7A",
-    "variance": 100
+    "variance": 100.0
 },
 "Green": {
     "color": "#1CBD2A",
-    "variance": 73
+    "variance": 73.0
 },
 "Orange": {
     "color": "#C27B13",
-    "variance": 47
+    "variance": 47.0
 },
 "Pink": {
     "color": "#FFBECC",
-    "variance": 18
+    "variance": 18.0
 },
 "Purple": {
     "color": "#9E4DFF",
-    "variance": 29
+    "variance": 29.0
 },
 "Red": {
     "color": "#FF260C",
-    "variance": 63
+    "variance": 63.0
 },
 "Tan": {
     "color": "#D18D12",
-    "variance": 12
+    "variance": 12.0
 },
 "White": {
     "color": "#FFFDF7",
-    "variance": 4
+    "variance": 4.0
 },
 "Yellow": {
     "color": "#FFF000",
-    "variance": 18
+    "variance": 18.0
 }
