@@ -16,14 +16,38 @@ import _ "image/jpeg"
 import _ "image/png"
 
 type DefinedColor struct{
-    hex string
+    hex color.Hex
     variance float32
 }
 
-func readColorConfig(configLocation string)(definedColors map[string]DefinedColor){
-    var colors make(map[string]DefinedColor)
+type GeneratedColor struct{
+    red uint64
+    green uint64
+    blue uint64
+}
 
+func readColorConfig(configLocation string)(definedColors []DefinedColor){
+    /*
+        This should read the color values from the config file, but I don't know 
+        how to do that yet, so we're going to just create a bunch of structs manually
+        and plop them in a slice and feel bad about it until we make it better. Cool?
+    */
 
+    black  := DefinedColor{ hex: "#191818", variance: 100.0 }
+    brown  := DefinedColor{ hex: "#795000", variance: 36.0  }
+    blue   := DefinedColor{ hex: "#3F4AFF", variance: 46.0  }
+    gold   := DefinedColor{ hex: "#C1B000", variance: 15.0  }
+    gray   := DefinedColor{ hex: "#7D7C7A", variance: 100.0 }
+    green  := DefinedColor{ hex: "#1CBD2A", variance: 73.0  }
+    orange := DefinedColor{ hex: "#C27B13", variance: 47.0  }
+    pink   := DefinedColor{ hex: "#FFBECC", variance: 18.0  }
+    purple := DefinedColor{ hex: "#9E4DFF", variance: 29.0  }
+    red    := DefinedColor{ hex: "#FF260C", variance: 63.0  }
+    tan    := DefinedColor{ hex: "#D18D12", variance: 12.0  }
+    white  := DefinedColor{ hex: "#FFFDF7", variance: 4.0   }
+    yellow := DefinedColor{ hex: "#FFF000", variance: 18.0  }
+
+    return []DefinedColor{black, brown, blue, gold, gray, green, orange, pink, purple, red, tan, white, yellow}
 }
 
 func downloadImageFromUrl(url string, saveAs string)(error error){
@@ -88,8 +112,7 @@ func cropImage(img image.Image, percentage float64)(croppedImg image.Image, erro
 }
 
 func createClusters(numberOfClusters int, img image.Image) (completeClusters map[int][]color.Color){
-
-    // everything below this line seems fucked up
+    // everything below this line seems ucked up
     clusters := make(map[int][]color.Color, numberOfClusters)
     clusterPoints := make([]map[string]int, numberOfClusters)
     bounds := img.Bounds()
@@ -125,23 +148,44 @@ func createClusters(numberOfClusters int, img image.Image) (completeClusters map
     return clusters
 }
 
-func analyzeClusters(clusters map[int][]color.Color){
-
+func analyzeClusters(clusters map[int][]color.Color, definedColors []DefinedColor){
     for cluster := range clusters{
-        redTotal := uint32(0)
-        greenTotal := uint32(0)
-        blueTotal := uint32(0)
-        pixelTotal := uint32(0)
+        redTotal := uint64(0)
+        greenTotal := uint64(0)
+        blueTotal := uint64(0)
+        pixelTotal := uint64(0)
         for pixel := range clusters[cluster]{
             r, g, b, _ := clusters[cluster][pixel].RGBA()
             
-            redTotal += uint32(r >> 8)
-            greenTotal += uint32(g >> 8)
-            blueTotal += uint32(b >> 8)
+            redTotal += uint64(r >> 8)
+            greenTotal += uint64(g >> 8)
+            blueTotal += uint64(b >> 8)
             pixelTotal += 1
         }
-        fmt.Println(cluster, " index cluster averages (R,G,B): ", redTotal / pixelTotal, greenTotal / pixelTotal, blueTotal / pixelTotal)
+        
+        // generatedColor := calculateFinalHueValues(redTotal, blueTotal, greenTotal, pixelTotal)
+
+        for _, color := range definedColors{
+            createGeneratedColorFromDefinedColor(color)
+        }
     }
+}
+
+func createGeneratedColorFromDefinedColor(color DefinedColor){
+    rawHex := color.hex[1:len(color.hex)]
+    initialR := rawHex[0:2]
+    initialG := rawHex[2:4]
+    initialB := rawHex[4:6]
+
+    fmt.Println(initialR, " ", initialG, " ", initialB)
+}
+
+func calculateFinalHueValues(red uint64, blue uint64, green uint64, total uint64)(color GeneratedColor){
+    r :=   red / total
+    g := green / total
+    b :=  blue / total
+
+    return GeneratedColor{ red: r, green: g, blue: b }
 }
 
 func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int)(float64){
@@ -159,12 +203,9 @@ func closeIfError(error error){
 func main(){
     url := "http://i.imgur.com/GVzew0Y.jpg"
     saveAs := "sample.png"
-    _ := "sample_images/red.png"
     k := 5
-    
-    jsonParser := json.NewDecoder(configFile)
-    err = jsonParser.Decode(&DefinedColor)
-    closeIfError(err)
+    // _ := "sample_images/red.png"
+    // colorConfigFile := "colors.json"
 
     err := downloadImageFromUrl(url, saveAs)
     closeIfError(err)
@@ -172,6 +213,7 @@ func main(){
     img, err := openImage(saveAs)
     closeIfError(err)
 
+    definedColors := readColorConfig("")
     clusters := createClusters(k, img)
-    analyzeClusters(clusters)
+    analyzeClusters(clusters, definedColors)
 }
