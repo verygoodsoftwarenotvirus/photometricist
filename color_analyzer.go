@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/disintegration/imaging"
+	"github.com/lucasb-eyer/go-colorful"
 	"image"
 	"image/color"
 	"image/draw"
@@ -12,7 +14,6 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -30,15 +31,6 @@ type GeneratedColor struct {
 	red   float64
 	green float64
 	blue  float64
-}
-
-type ColorRange struct {
-	minRed   float64
-	maxRed   float64
-	minBlue  float64
-	maxBlue  float64
-	minGreen float64
-	maxGreen float64
 }
 
 func readColorConfig(configLocation string) (definedColors []DefinedColor) {
@@ -101,40 +93,41 @@ func deleteImageByLocation(location string) (error error) {
 
 func openImage(filename string) (img image.Image, error error) {
 	imgfile, error := os.Open(filename)
-
-	if error != nil {
-		log.Fatal(error)
-		return nil, error
-	}
+	closeIfError(error)
 
 	defer imgfile.Close()
 
 	img, _, error = image.Decode(imgfile)
+	closeIfError(error)
 
-	if error != nil {
-		log.Fatal(error)
-		return nil, error
-	}
-
-	return img, nil
+	return img, error
 }
 
 func cropImage(img image.Image, percentage float64) (croppedImg image.Image, error error) {
 	// https://github.com/LiterallyElvis/color-analyzer/blob/master/analysis_objects.py#L63
-	percentage = math.Max(percentage, 99.0)
+	bounds := img.Bounds()
+	width := int(float64(bounds.Max.X) * (percentage * .01))
+	height := int(float64(bounds.Max.Y) * (percentage * .01))
 
-	return nil, nil
+	out, err := os.Create("testcrop.png")
+	err = png.Encode(out, imaging.CropCenter(img, width, height))
+	closeIfError(err)
+
+	return imaging.CropCenter(img, width, height), nil
 }
 
 func createDebugImage(filename string, bounds image.Rectangle, clusterPoints []map[string]int) {
 	out, err := os.Create(filename)
 	closeIfError(err)
 	debugImgOutline := image.Rect(0, 0, bounds.Max.X, bounds.Max.Y)
+	// debugImg := image.NewRGBA(debugImgOutline)
 	debugImg := image.NewGray(debugImgOutline)
-	draw.Draw(debugImg, debugImg.Bounds(), &image.Uniform{color.White}, image.ZP, draw.Src)
+	draw.Draw(debugImg, debugImg.Bounds(), &image.Uniform{color.Transparent}, image.ZP, draw.Src)
 
 	for _, point := range clusterPoints {
-		debugPoint := image.Rect(point["X"], point["Y"], point["X"]+5, point["Y"]+5)
+		debugPointOutline := image.Rect(point["X"], point["Y"], point["X"]+5, point["Y"]+5)
+		debugPoint := image.Rect(point["X"]+1, point["Y"]+1, point["X"]+4, point["Y"]+4)
+		draw.Draw(debugImg, debugPointOutline, &image.Uniform{color.White}, image.Point{X: point["X"], Y: point["Y"]}, draw.Src)
 		draw.Draw(debugImg, debugPoint, &image.Uniform{color.Black}, image.Point{X: point["X"], Y: point["Y"]}, draw.Src)
 	}
 
@@ -157,7 +150,7 @@ func createClusters(numberOfClusters int, img image.Image) (completeClusters map
 	}
 	// everything above this line seems fucked up
 
-	createDebugImage("debug.png", bounds, clusterPoints)
+	// createDebugImage("debug.png", bounds, clusterPoints)
 
 	smallestDistanceIndex := math.MaxInt32
 	smallestDistance := math.MaxFloat64
@@ -181,67 +174,29 @@ func createClusters(numberOfClusters int, img image.Image) (completeClusters map
 	return clusters
 }
 
-func analyzeClusters(clusters map[int][]color.Color, definedColors []DefinedColor) {
-	for cluster := range clusters {
-		redTotal := float64(0.0)
-		greenTotal := float64(0.0)
-		blueTotal := float64(0.0)
-		pixelTotal := float64(0.0)
-		for pixel := range clusters[cluster] {
-			r, g, b, _ := clusters[cluster][pixel].RGBA()
+func analyzeCluster(cluster []color.Color, definedColors []DefinedColor) {
+	redTotal := float64(0.0)
+	greenTotal := float64(0.0)
+	blueTotal := float64(0.0)
+	pixelTotal := float64(0.0)
+	for pixel := range cluster {
+		r, g, b, _ := cluster[pixel].RGBA()
 
-			redTotal += float64(r >> 8)
-			greenTotal += float64(g >> 8)
-			blueTotal += float64(b >> 8)
-			pixelTotal += 1
+		redTotal += float64(r >> 8)
+		greenTotal += float64(g >> 8)
+		blueTotal += float64(b >> 8)
+		pixelTotal += 1
+	}
+	finalColor := colorful.Color{(redTotal / pixelTotal) / 255.0, (greenTotal / pixelTotal) / 255.0, (blueTotal / pixelTotal) / 255.0}
+	smallestDistance := math.MaxFloat64
+	closestColor := ""
+	for _, definedColor := range definedColors {
+		tempColor, _ := colorful.Hex(definedColor.hex)
+		if finalColor.DistanceCIE94(tempColor) < smallestDistance {
+			closestColor = definedColor.name
 		}
-
-		// result := calculateFinalColorValues(redTotal, greenTotal, blueTotal, pixelTotal)
-
-		// for _, color := range definedColors {
-		// 	compare := createComparisonFromDefinedColor(color)
-		// 	if colorMatchesRanges(result, compare) {
-		// 		fmt.Println("\n!!!!!!!!!!!!!!!!!\n")
-		// 		fmt.Println("Matched!: ", color.name)
-		// 		fmt.Println(uint16(compare.minRed), " <=> ", uint16(result.red), " <=> ", uint16(compare.maxRed))
-		// 		fmt.Println(uint16(compare.minGreen), " <=> ", uint16(result.green), " <=> ", uint16(compare.maxGreen))
-		// 		fmt.Println(uint16(compare.minBlue), " <=> ", uint16(result.blue), " <=> ", uint16(compare.maxBlue))
-		// 		fmt.Println("\n!!!!!!!!!!!!!!!!!\n")
-		// 	} else {
-		// 		fmt.Println("\nUnmatched!", color.name)
-		// 		fmt.Println(uint16(compare.minRed), " <=> ", uint16(result.red), " <=> ", uint16(compare.maxRed))
-		// 		fmt.Println(uint16(compare.minGreen), " <=> ", uint16(result.green), " <=> ", uint16(compare.maxGreen))
-		// 		fmt.Println(uint16(compare.minBlue), " <=> ", uint16(result.blue), " <=> ", uint16(compare.maxBlue))
-		// 	}
-		// }
 	}
-}
-
-func colorMatchesRanges(color GeneratedColor, compare ColorRange) (result bool) {
-	if compare.minRed > color.red || color.red > compare.maxRed {
-		return false
-	} else if compare.minGreen > color.green || color.green > compare.maxGreen {
-		return false
-	} else if compare.minBlue > color.blue || color.blue > compare.maxBlue {
-		return false
-	} else {
-		return true
-	}
-}
-
-func createComparisonFromDefinedColor(color DefinedColor) (result ColorRange) {
-	rawHex := color.hex[1:len(color.hex)]
-	rgb, err := strconv.ParseUint(string(rawHex), 16, 32)
-	closeIfError(err)
-	red, green, blue := float64(rgb>>16), float64((rgb>>8)&0xFF), float64(rgb&0xFF)
-	return ColorRange{
-		minRed:   math.Max(red-(red*(color.variance*.01)), 0),
-		maxRed:   math.Min(red+(red*(color.variance*.01)), 255),
-		minGreen: math.Max(green-(green*(color.variance*.01)), 0),
-		maxGreen: math.Min(green+(green*(color.variance*.01)), 255),
-		minBlue:  math.Max(blue-(blue*(color.variance*.01)), 0),
-		maxBlue:  math.Min(blue+(blue*(color.variance*.01)), 255),
-	}
+	fmt.Println(closestColor)
 }
 
 func calculateFinalColorValues(red float64, green float64, blue float64, total float64) (color GeneratedColor) {
@@ -264,11 +219,11 @@ func main() {
 	rand.Seed(time.Now().Unix())
 	deleteImageByLocation("sample.png")
 	deleteImageByLocation("debug.png")
-	url := "http://www.surlatable.com/images/customers/c1079/PRO-1748698/PRO-1748698_hopup/main_variation_Default_view_2_715x715."
+	url := "http://i.imgur.com/WpsnGdF.jpg"
 	saveAs := "sample.png"
 	// testingListOfImages := false
 	k := 5
-	// saveAs := "sample_images/red.png"
+	// saveAs := "sample_images/green.png"
 	// colorConfigFile := "colors.json"
 
 	err := downloadImageFromUrl(url, saveAs)
@@ -277,7 +232,15 @@ func main() {
 	img, err := openImage(saveAs)
 	closeIfError(err)
 
+	croppedImg, err := cropImage(img, 50)
+	resizedImg := imaging.Resize(croppedImg, 200, 200, imaging.Lanczos)
+
 	definedColors := readColorConfig("")
-	clusters := createClusters(k, img)
-	analyzeClusters(clusters, definedColors)
+	clusters := createClusters(k, resizedImg)
+
+	go analyzeCluster(clusters[0], definedColors)
+	go analyzeCluster(clusters[1], definedColors)
+	go analyzeCluster(clusters[2], definedColors)
+	go analyzeCluster(clusters[3], definedColors)
+	go analyzeCluster(clusters[4], definedColors)
 }
