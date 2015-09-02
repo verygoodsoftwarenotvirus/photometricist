@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/lucasb-eyer/go-colorful"
@@ -14,6 +15,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -21,63 +23,40 @@ import (
 import _ "image/jpeg"
 import _ "image/gif"
 
-type DefinedColor struct {
-	name     string
-	hex      string
-	variance float64
-}
+func readColorConfig(filename string) []colorful.Color {
+	colors := []colorful.Color{}
+	file, err := os.Open(filename)
+	closeIfError(err)
+	defer file.Close()
 
-type GeneratedColor struct {
-	red   float64
-	green float64
-	blue  float64
-}
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		colorValues := strings.Split(strings.Trim(strings.Split(scanner.Text(), "]")[0], "[ "), ",")
+		colorName := strings.Trim(strings.Split(scanner.Text(), "]")[1], " ")
 
-func readColorConfig(configLocation string) (definedColors []DefinedColor) {
-	/*
-	   This should read the color values from the config file, but I don't know
-	   how to do that yet, so we're going to just create a bunch of structs manually
-	   and plop them in a slice and feel bad about it until we make it better. Cool?
-	*/
+		fmt.Println(" ")
+		fmt.Println("red: ", colorValues[0])
+		fmt.Println("green: ", colorValues[1])
+		fmt.Println("blue: ", colorValues[2])
+		fmt.Println("name: ", colorName)
+	}
 
-	black := DefinedColor{name: "Black", hex: "#191818", variance: 100.0}
-	brown := DefinedColor{name: "Brown", hex: "#795000", variance: 36.0}
-	blue := DefinedColor{name: "Blue", hex: "#3F4AFF", variance: 46.0}
-	gold := DefinedColor{name: "Gold", hex: "#C1B000", variance: 15.0}
-	gray := DefinedColor{name: "Gray", hex: "#7D7C7A", variance: 30.0}
-	green := DefinedColor{name: "Green", hex: "#1CBD2A", variance: 73.0}
-	orange := DefinedColor{name: "Orange", hex: "#C27B13", variance: 47.0}
-	pink := DefinedColor{name: "Pink", hex: "#FFBECC", variance: 18.0}
-	purple := DefinedColor{name: "Purple", hex: "#9E4DFF", variance: 29.0}
-	red := DefinedColor{name: "Red", hex: "#FF260C", variance: 63.0}
-	tan := DefinedColor{name: "Tan", hex: "#D18D12", variance: 12.0}
-	white := DefinedColor{name: "White", hex: "#FFFDF7", variance: 4.0}
-	yellow := DefinedColor{name: "Yellow", hex: "#FFF000", variance: 18.0}
-
-	return []DefinedColor{black, brown, blue, gold, gray, green, orange, pink, purple, red, tan, white, yellow}
+	err = scanner.Err()
+	closeIfError(err)
+	return colors
 }
 
 func downloadImageFromUrl(url string, saveAs string) (error error) {
 	response, err := http.Get(url)
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
+	closeIfError(err)
 	defer response.Body.Close()
 
-	// open a file for writing
 	file, err := os.Create(saveAs)
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
+	closeIfError(err)
 
 	// dump the response body to the file
 	_, err = io.Copy(file, response.Body)
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
+	closeIfError(err)
 
 	file.Close()
 	return nil
@@ -85,9 +64,7 @@ func downloadImageFromUrl(url string, saveAs string) (error error) {
 
 func deleteImageByLocation(location string) (error error) {
 	error = os.Remove(location)
-	if error != nil {
-		return error
-	}
+	closeIfError(error)
 	return nil
 }
 
@@ -104,7 +81,6 @@ func openImage(filename string) (img image.Image, error error) {
 }
 
 func cropImage(img image.Image, percentage float64) (croppedImg image.Image, error error) {
-	// https://github.com/LiterallyElvis/color-analyzer/blob/master/analysis_objects.py#L63
 	bounds := img.Bounds()
 	width := int(float64(bounds.Max.X) * (percentage * .01))
 	height := int(float64(bounds.Max.Y) * (percentage * .01))
@@ -120,8 +96,7 @@ func createDebugImage(filename string, bounds image.Rectangle, clusterPoints []m
 	out, err := os.Create(filename)
 	closeIfError(err)
 	debugImgOutline := image.Rect(0, 0, bounds.Max.X, bounds.Max.Y)
-	// debugImg := image.NewRGBA(debugImgOutline)
-	debugImg := image.NewGray(debugImgOutline)
+	debugImg := image.NewRGBA(debugImgOutline)
 	draw.Draw(debugImg, debugImg.Bounds(), &image.Uniform{color.Transparent}, image.ZP, draw.Src)
 
 	for _, point := range clusterPoints {
@@ -136,7 +111,6 @@ func createDebugImage(filename string, bounds image.Rectangle, clusterPoints []m
 }
 
 func createClusters(numberOfClusters int, img image.Image) (completeClusters map[int][]color.Color) {
-	// everything below this line seems ucked up
 	clusters := make(map[int][]color.Color, numberOfClusters)
 	clusterPoints := make([]map[string]int, numberOfClusters)
 	bounds := img.Bounds()
@@ -148,7 +122,6 @@ func createClusters(numberOfClusters int, img image.Image) (completeClusters map
 			"Y": rand.Intn(bounds.Max.Y-bounds.Min.Y) + bounds.Min.Y,
 		}
 	}
-	// everything above this line seems fucked up
 
 	// createDebugImage("debug.png", bounds, clusterPoints)
 
@@ -174,7 +147,7 @@ func createClusters(numberOfClusters int, img image.Image) (completeClusters map
 	return clusters
 }
 
-func analyzeCluster(cluster []color.Color, definedColors []DefinedColor) {
+func analyzeCluster(cluster []color.Color) {
 	redTotal := float64(0.0)
 	greenTotal := float64(0.0)
 	blueTotal := float64(0.0)
@@ -188,19 +161,7 @@ func analyzeCluster(cluster []color.Color, definedColors []DefinedColor) {
 		pixelTotal += 1
 	}
 	finalColor := colorful.Color{(redTotal / pixelTotal) / 255.0, (greenTotal / pixelTotal) / 255.0, (blueTotal / pixelTotal) / 255.0}
-	smallestDistance := math.MaxFloat64
-	closestColor := ""
-	for _, definedColor := range definedColors {
-		tempColor, _ := colorful.Hex(definedColor.hex)
-		if finalColor.DistanceCIE94(tempColor) < smallestDistance {
-			closestColor = definedColor.name
-		}
-	}
-	fmt.Println(closestColor)
-}
-
-func calculateFinalColorValues(red float64, green float64, blue float64, total float64) (color GeneratedColor) {
-	return GeneratedColor{red: red / total, green: green / total, blue: blue / total}
+	fmt.Println(finalColor.Hex())
 }
 
 func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int) float64 {
@@ -210,6 +171,7 @@ func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int) float64 {
 
 func closeIfError(error error) {
 	if error != nil {
+		log.Fatal(error)
 		fmt.Println(error)
 		os.Exit(1)
 	}
@@ -217,30 +179,49 @@ func closeIfError(error error) {
 
 func main() {
 	rand.Seed(time.Now().Unix())
-	deleteImageByLocation("sample.png")
-	deleteImageByLocation("debug.png")
-	url := "http://i.imgur.com/WpsnGdF.jpg"
 	saveAs := "sample.png"
-	// testingListOfImages := false
+	deleteImageByLocation(saveAs)
+	testingListOfImages := false
 	k := 5
-	// saveAs := "sample_images/green.png"
-	// colorConfigFile := "colors.json"
 
-	err := downloadImageFromUrl(url, saveAs)
-	closeIfError(err)
+	if testingListOfImages {
+		url := "http://i.imgur.com/WpsnGdF.jpg"
+		err := downloadImageFromUrl(url, saveAs)
+		closeIfError(err)
 
-	img, err := openImage(saveAs)
-	closeIfError(err)
+		img, err := openImage(saveAs)
+		closeIfError(err)
 
-	croppedImg, err := cropImage(img, 50)
-	resizedImg := imaging.Resize(croppedImg, 200, 200, imaging.Lanczos)
+		croppedImg, err := cropImage(img, 50)
+		resizedImg := imaging.Resize(croppedImg, 200, 200, imaging.Lanczos)
 
-	definedColors := readColorConfig("")
-	clusters := createClusters(k, resizedImg)
+		clusters := createClusters(k, resizedImg)
 
-	go analyzeCluster(clusters[0], definedColors)
-	go analyzeCluster(clusters[1], definedColors)
-	go analyzeCluster(clusters[2], definedColors)
-	go analyzeCluster(clusters[3], definedColors)
-	go analyzeCluster(clusters[4], definedColors)
+		analyzeCluster(clusters[0])
+		analyzeCluster(clusters[1])
+		analyzeCluster(clusters[2])
+		analyzeCluster(clusters[3])
+		analyzeCluster(clusters[4])
+	} else {
+		imageLocations := []string{"http://i.imgur.com/WpsnGdF.jpg"}
+		for _, location := range imageLocations {
+			err := downloadImageFromUrl(location, saveAs)
+			closeIfError(err)
+
+			img, err := openImage(saveAs)
+			closeIfError(err)
+
+			croppedImg, err := cropImage(img, 50)
+			resizedImg := imaging.Resize(croppedImg, 200, 200, imaging.Lanczos)
+
+			clusters := createClusters(k, resizedImg)
+
+			analyzeCluster(clusters[0])
+			analyzeCluster(clusters[1])
+			analyzeCluster(clusters[2])
+			analyzeCluster(clusters[3])
+			analyzeCluster(clusters[4])
+			deleteImageByLocation(saveAs)
+		}
+	}
 }
