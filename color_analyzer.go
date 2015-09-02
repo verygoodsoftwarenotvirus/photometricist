@@ -1,7 +1,8 @@
 package main
 
 import (
-	"bufio"
+	// "bufio"
+	// "strings"
 	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/lucasb-eyer/go-colorful"
@@ -15,7 +16,6 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -23,30 +23,30 @@ import (
 import _ "image/jpeg"
 import _ "image/gif"
 
-func readColorConfig(filename string) []colorful.Color {
-	colors := []colorful.Color{}
-	file, err := os.Open(filename)
-	closeIfError(err)
-	defer file.Close()
+// func readColorConfig(filename string) []colorful.Color {
+// 	colors := []colorful.Color{}
+// 	file, err := os.Open(filename)
+// 	closeIfError(err)
+// 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		colorValues := strings.Split(strings.Trim(strings.Split(scanner.Text(), "]")[0], "[ "), ",")
-		colorName := strings.Trim(strings.Split(scanner.Text(), "]")[1], " ")
+// 	scanner := bufio.NewScanner(file)
+// 	for scanner.Scan() {
+// 		colorValues := strings.Split(strings.Trim(strings.Split(scanner.Text(), "]")[0], "[ "), ",")
+// 		colorName := strings.Trim(strings.Split(scanner.Text(), "]")[1], " ")
 
-		fmt.Println(" ")
-		fmt.Println("red: ", colorValues[0])
-		fmt.Println("green: ", colorValues[1])
-		fmt.Println("blue: ", colorValues[2])
-		fmt.Println("name: ", colorName)
-	}
+// 		fmt.Println(" ")
+// 		fmt.Println("red: ", colorValues[0])
+// 		fmt.Println("green: ", colorValues[1])
+// 		fmt.Println("blue: ", colorValues[2])
+// 		fmt.Println("name: ", colorName)
+// 	}
 
-	err = scanner.Err()
-	closeIfError(err)
-	return colors
-}
+// 	err = scanner.Err()
+// 	closeIfError(err)
+// 	return colors
+// }
 
-func downloadImageFromUrl(url string, saveAs string) (error error) {
+func downloadImageFromUrl(url string, saveAs string) {
 	response, err := http.Get(url)
 	closeIfError(err)
 	defer response.Body.Close()
@@ -59,42 +59,57 @@ func downloadImageFromUrl(url string, saveAs string) (error error) {
 	closeIfError(err)
 
 	file.Close()
-	return nil
 }
 
-func deleteImageByLocation(location string) (error error) {
-	error = os.Remove(location)
-	closeIfError(error)
-	return nil
+func deleteFileByLocation(location string) {
+	err := os.Remove(location)
+	closeIfError(err)
 }
 
-func openImage(filename string) (img image.Image, error error) {
-	imgfile, error := os.Open(filename)
-	closeIfError(error)
+func openImage(filename string) image.Image {
+	imgfile, err := os.Open(filename)
+	closeIfError(err)
 
 	defer imgfile.Close()
 
-	img, _, error = image.Decode(imgfile)
-	closeIfError(error)
+	img, _, err := image.Decode(imgfile)
+	closeIfError(err)
 
-	return img, error
+	return img
 }
 
-func cropImage(img image.Image, percentage float64) (croppedImg image.Image, error error) {
+func cropImage(img image.Image, percentage float64, filename string) image.Image {
 	bounds := img.Bounds()
 	width := int(float64(bounds.Max.X) * (percentage * .01))
 	height := int(float64(bounds.Max.Y) * (percentage * .01))
 
-	out, err := os.Create("testcrop.png")
-	err = png.Encode(out, imaging.CropCenter(img, width, height))
-	closeIfError(err)
+	if len(filename) > 0 {
+		out, err := os.Create(filename)
+		err = png.Encode(out, imaging.CropCenter(img, width, height))
+		closeIfError(err)
+	}
 
-	return imaging.CropCenter(img, width, height), nil
+	return imaging.CropCenter(img, width, height)
+}
+
+func resizeImage(img image.Image, maxWidth int, filename string) image.Image {
+	bounds := img.Bounds()
+	modifier := float64(maxWidth) / float64(bounds.Max.X)
+	height := int(float64(bounds.Max.Y) * modifier)
+
+	resizedImage := imaging.Resize(img, maxWidth, height, imaging.Lanczos)
+	if len(filename) > 0 {
+		out, err := os.Create(filename)
+		closeIfError(err)
+
+		err = png.Encode(out, resizedImage)
+		closeIfError(err)
+	}
+
+	return resizedImage
 }
 
 func createDebugImage(filename string, bounds image.Rectangle, clusterPoints []map[string]int) {
-	out, err := os.Create(filename)
-	closeIfError(err)
 	debugImgOutline := image.Rect(0, 0, bounds.Max.X, bounds.Max.Y)
 	debugImg := image.NewRGBA(debugImgOutline)
 	draw.Draw(debugImg, debugImg.Bounds(), &image.Uniform{color.Transparent}, image.ZP, draw.Src)
@@ -105,12 +120,16 @@ func createDebugImage(filename string, bounds image.Rectangle, clusterPoints []m
 		draw.Draw(debugImg, debugPointOutline, &image.Uniform{color.White}, image.Point{X: point["X"], Y: point["Y"]}, draw.Src)
 		draw.Draw(debugImg, debugPoint, &image.Uniform{color.Black}, image.Point{X: point["X"], Y: point["Y"]}, draw.Src)
 	}
+	if len(filename) > 0 {
+		out, err := os.Create(filename)
+		closeIfError(err)
 
-	err = png.Encode(out, debugImg)
-	closeIfError(err)
+		err = png.Encode(out, debugImg)
+		closeIfError(err)
+	}
 }
 
-func createClusters(numberOfClusters int, img image.Image) (completeClusters map[int][]color.Color) {
+func createClusters(numberOfClusters int, img image.Image) map[int][]color.Color {
 	clusters := make(map[int][]color.Color, numberOfClusters)
 	clusterPoints := make([]map[string]int, numberOfClusters)
 	bounds := img.Bounds()
@@ -169,10 +188,10 @@ func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int) float64 {
 	return math.Sqrt(math.Pow(float64(qOne-pOne), 2) + math.Pow(float64(qTwo-pTwo), 2))
 }
 
-func closeIfError(error error) {
-	if error != nil {
-		log.Fatal(error)
-		fmt.Println(error)
+func closeIfError(err error) {
+	if err != nil {
+		log.Fatal(err)
+		fmt.Println(err)
 		os.Exit(1)
 	}
 }
@@ -180,48 +199,53 @@ func closeIfError(error error) {
 func main() {
 	rand.Seed(time.Now().Unix())
 	saveAs := "sample.png"
-	deleteImageByLocation(saveAs)
-	testingListOfImages := false
+	testingListOfImages := true
 	k := 5
 
 	if testingListOfImages {
-		url := "http://i.imgur.com/WpsnGdF.jpg"
-		err := downloadImageFromUrl(url, saveAs)
-		closeIfError(err)
-
-		img, err := openImage(saveAs)
-		closeIfError(err)
-
-		croppedImg, err := cropImage(img, 50)
-		resizedImg := imaging.Resize(croppedImg, 200, 200, imaging.Lanczos)
-
-		clusters := createClusters(k, resizedImg)
-
-		analyzeCluster(clusters[0])
-		analyzeCluster(clusters[1])
-		analyzeCluster(clusters[2])
-		analyzeCluster(clusters[3])
-		analyzeCluster(clusters[4])
-	} else {
-		imageLocations := []string{"http://i.imgur.com/WpsnGdF.jpg"}
+		imageLocations := []string{
+			"http://i.imgur.com/WpsnGdF.jpg",
+			"http://i.imgur.com/0fOqb1G.jpg",
+			"http://i.imgur.com/fKVX14Z.jpg",
+			"http://i.imgur.com/9MaHnRC.jpg",
+			"http://i.imgur.com/weEh6sY.jpg",
+			"http://i.imgur.com/jU8hj6v.png",
+		}
 		for _, location := range imageLocations {
-			err := downloadImageFromUrl(location, saveAs)
-			closeIfError(err)
+			downloadImageFromUrl(location, saveAs)
+			img := openImage(saveAs)
 
-			img, err := openImage(saveAs)
-			closeIfError(err)
-
-			croppedImg, err := cropImage(img, 50)
-			resizedImg := imaging.Resize(croppedImg, 200, 200, imaging.Lanczos)
+			croppedImg := cropImage(img, 50, "cropped.png")
+			resizedImg := resizeImage(croppedImg, 200, "resized.png")
 
 			clusters := createClusters(k, resizedImg)
 
+			fmt.Printf("\n%v: \n", location)
 			analyzeCluster(clusters[0])
 			analyzeCluster(clusters[1])
 			analyzeCluster(clusters[2])
 			analyzeCluster(clusters[3])
 			analyzeCluster(clusters[4])
-			deleteImageByLocation(saveAs)
+
+			deleteFileByLocation(saveAs)
 		}
+	} else {
+		url := "http://i.imgur.com/WpsnGdF.jpg"
+		downloadImageFromUrl(url, saveAs)
+		img := openImage(saveAs)
+
+		croppedImg := cropImage(img, 50, "cropped.png")
+		resizedImg := resizeImage(croppedImg, 200, "resized.png")
+
+		clusters := createClusters(k, resizedImg)
+
+		fmt.Printf("\n%v: \n", url)
+		analyzeCluster(clusters[0])
+		analyzeCluster(clusters[1])
+		analyzeCluster(clusters[2])
+		analyzeCluster(clusters[3])
+		analyzeCluster(clusters[4])
+
+		deleteFileByLocation(saveAs)
 	}
 }
