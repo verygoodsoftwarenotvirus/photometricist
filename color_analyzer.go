@@ -3,6 +3,7 @@ package main
 import (
 	// "bufio"
 	// "strings"
+	"encoding/csv"
 	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/lucasb-eyer/go-colorful"
@@ -66,16 +67,22 @@ func deleteFileByLocation(location string) {
 	closeIfError(err)
 }
 
-func openImage(filename string) image.Image {
+func openImage(filename string) (result image.Image, skip bool) {
 	imgfile, err := os.Open(filename)
-	closeIfError(err)
+	shouldSkip := closeIfError(err)
+	if shouldSkip {
+		return nil, true
+	}
 
 	defer imgfile.Close()
 
 	img, _, err := image.Decode(imgfile)
-	closeIfError(err)
+	shouldSkip = closeIfError(err)
+	if shouldSkip {
+		return nil, true
+	}
 
-	return img
+	return img, false
 }
 
 func cropImage(img image.Image, percentage float64, filename string) image.Image {
@@ -166,7 +173,7 @@ func createClusters(numberOfClusters int, img image.Image) map[int][]color.Color
 	return clusters
 }
 
-func analyzeCluster(cluster []color.Color) {
+func analyzeCluster(cluster []color.Color) string {
 	redTotal := float64(0.0)
 	greenTotal := float64(0.0)
 	blueTotal := float64(0.0)
@@ -180,7 +187,8 @@ func analyzeCluster(cluster []color.Color) {
 		pixelTotal += 1
 	}
 	finalColor := colorful.Color{(redTotal / pixelTotal) / 255.0, (greenTotal / pixelTotal) / 255.0, (blueTotal / pixelTotal) / 255.0}
-	fmt.Println(finalColor.Hex())
+	// fmt.Println(finalColor.Hex())
+	return finalColor.Hex()
 }
 
 func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int) float64 {
@@ -188,19 +196,23 @@ func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int) float64 {
 	return math.Sqrt(math.Pow(float64(qOne-pOne), 2) + math.Pow(float64(qTwo-pTwo), 2))
 }
 
-func closeIfError(err error) {
+func closeIfError(err error) bool {
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 		fmt.Println(err)
-		os.Exit(1)
+		return true
 	}
+	return false
 }
 
 func main() {
+	start := time.Now()
 	rand.Seed(time.Now().Unix())
 	saveAs := "sample.png"
-	testingListOfImages := true
+	testingCSV := true
+	testingListOfImages := false
 	k := 5
+	numberOfImages := 0
 
 	if testingListOfImages {
 		imageLocations := []string{
@@ -213,7 +225,7 @@ func main() {
 		}
 		for _, location := range imageLocations {
 			downloadImageFromUrl(location, saveAs)
-			img := openImage(saveAs)
+			img, _ := openImage(saveAs)
 
 			croppedImg := cropImage(img, 50, "cropped.png")
 			resizedImg := resizeImage(croppedImg, 200, "resized.png")
@@ -229,10 +241,50 @@ func main() {
 
 			deleteFileByLocation(saveAs)
 		}
+	} else if testingCSV {
+		csvfile, err := os.Create("slt_output.csv")
+		closeIfError(err)
+
+		sourceFile, err := os.Open("skusandimages.csv")
+		closeIfError(err)
+
+		writer := csv.NewWriter(csvfile)
+		reader := csv.NewReader(sourceFile)
+		lines, err := reader.ReadAll()
+		closeIfError(err)
+
+		for _, line := range lines {
+			sku := line[0]
+			imageUrl := line[1]
+
+			downloadImageFromUrl(imageUrl, saveAs)
+			img, shouldSkip := openImage(saveAs)
+
+			if !shouldSkip {
+				croppedImg := cropImage(img, 50, "cropped.png")
+				resizedImg := resizeImage(croppedImg, 200, "resized.png")
+				clusters := createClusters(k, resizedImg)
+
+				err := writer.Write([]string{
+					sku,
+					imageUrl,
+					analyzeCluster(clusters[0]),
+					analyzeCluster(clusters[1]),
+					analyzeCluster(clusters[2]),
+					analyzeCluster(clusters[3]),
+					analyzeCluster(clusters[4]),
+				})
+				closeIfError(err)
+
+				deleteFileByLocation(saveAs)
+				numberOfImages += 1
+			}
+		}
+		writer.Flush()
 	} else {
 		url := "http://i.imgur.com/WpsnGdF.jpg"
 		downloadImageFromUrl(url, saveAs)
-		img := openImage(saveAs)
+		img, _ := openImage(saveAs)
 
 		croppedImg := cropImage(img, 50, "cropped.png")
 		resizedImg := resizeImage(croppedImg, 200, "resized.png")
@@ -248,4 +300,6 @@ func main() {
 
 		deleteFileByLocation(saveAs)
 	}
+	elapsed := time.Since(start)
+	log.Printf("Processing %v images took %s", numberOfImages, elapsed)
 }
