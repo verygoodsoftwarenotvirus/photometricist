@@ -1,8 +1,6 @@
 package main
 
 import (
-	// "bufio"
-	// "strings"
 	"encoding/csv"
 	"fmt"
 	"github.com/disintegration/imaging"
@@ -17,6 +15,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -24,28 +23,95 @@ import (
 import _ "image/jpeg"
 import _ "image/gif"
 
-// func readColorConfig(filename string) []colorful.Color {
-// 	colors := []colorful.Color{}
-// 	file, err := os.Open(filename)
-// 	closeIfError(err)
-// 	defer file.Close()
+type ColorDefinition struct {
+	name        string
+	hex         string
+	minDistance float64
+	maxDistance float64
+}
 
-// 	scanner := bufio.NewScanner(file)
-// 	for scanner.Scan() {
-// 		colorValues := strings.Split(strings.Trim(strings.Split(scanner.Text(), "]")[0], "[ "), ",")
-// 		colorName := strings.Trim(strings.Split(scanner.Text(), "]")[1], " ")
-
-// 		fmt.Println(" ")
-// 		fmt.Println("red: ", colorValues[0])
-// 		fmt.Println("green: ", colorValues[1])
-// 		fmt.Println("blue: ", colorValues[2])
-// 		fmt.Println("name: ", colorName)
-// 	}
-
-// 	err = scanner.Err()
-// 	closeIfError(err)
-// 	return colors
-// }
+func retrieveColorDefinitions(filename string) []ColorDefinition {
+	// This is gross and needs to be automated.
+	Black := ColorDefinition{
+		name:        "Black",
+		hex:         "#191818",
+		minDistance: 0.023842433019540137,
+		maxDistance: 0.02104211515520766,
+	}
+	Brown := ColorDefinition{
+		name:        "Brown",
+		hex:         "#795000",
+		minDistance: 0.19809101648616032,
+		maxDistance: 0.19210336287428736,
+	}
+	Blue := ColorDefinition{
+		name:        "Blue",
+		hex:         "#3F4AFF",
+		minDistance: 0.4641466052266115,
+		maxDistance: 0.4633987252122273,
+	}
+	Gold := ColorDefinition{
+		name:        "Gold",
+		hex:         "#C1B000",
+		minDistance: 0.13133286731508037,
+		maxDistance: 0.1264689296432074,
+	}
+	Gray := ColorDefinition{
+		name:        "Gray",
+		hex:         "#7D7C7A",
+		minDistance: 0.15423603423913348,
+		maxDistance: 0.15004028649601187,
+	}
+	Green := ColorDefinition{
+		name:        "Green",
+		hex:         "#1CBD2A",
+		minDistance: 0.7492784109976135,
+		maxDistance: 0.7456682300440184,
+	}
+	Orange := ColorDefinition{
+		name:        "Orange",
+		hex:         "#C27B13",
+		minDistance: 0.3696758700641386,
+		maxDistance: 0.3666353779425447,
+	}
+	Pink := ColorDefinition{
+		name:        "Pink",
+		hex:         "#FFBECC",
+		minDistance: 0.14258279796428422,
+		maxDistance: 0.13907449495014637,
+	}
+	Purple := ColorDefinition{
+		name:        "Purple",
+		hex:         "#9E4DFF",
+		minDistance: 0.28147884511085836,
+		maxDistance: 0.2798940121040469,
+	}
+	Red := ColorDefinition{
+		name:        "Red",
+		hex:         "#FF260C",
+		minDistance: 0.6663975631872985,
+		maxDistance: 0.6639093437480922,
+	}
+	Tan := ColorDefinition{
+		name:        "Tan",
+		hex:         "#D18D12",
+		minDistance: 0.0981207988444481,
+		maxDistance: 0.0948660417438293,
+	}
+	White := ColorDefinition{
+		name:        "White",
+		hex:         "#FFFDF7",
+		minDistance: 0.03822537621306147,
+		maxDistance: 0.03477705237396113,
+	}
+	Yellow := ColorDefinition{
+		name:        "Yellow",
+		hex:         "#FFF000",
+		minDistance: 0.20183243554226693,
+		maxDistance: 0.1971941953430347,
+	}
+	return []ColorDefinition{Black, Brown, Blue, Gold, Gray, Green, Orange, Pink, Purple, Red, Tan, White, Yellow}
+}
 
 func downloadImageFromUrl(url string, saveAs string) {
 	response, err := http.Get(url)
@@ -173,7 +239,7 @@ func createClusters(numberOfClusters int, img image.Image) map[int][]color.Color
 	return clusters
 }
 
-func analyzeCluster(cluster []color.Color) string {
+func analyzeCluster(cluster []color.Color, definedColors []ColorDefinition) (generatedColor string, matches []string) {
 	redTotal := float64(0.0)
 	greenTotal := float64(0.0)
 	blueTotal := float64(0.0)
@@ -187,8 +253,20 @@ func analyzeCluster(cluster []color.Color) string {
 		pixelTotal += 1
 	}
 	finalColor := colorful.Color{(redTotal / pixelTotal) / 255.0, (greenTotal / pixelTotal) / 255.0, (blueTotal / pixelTotal) / 255.0}
-	// fmt.Println(finalColor.Hex())
-	return finalColor.Hex()
+	results := []string{}
+
+	for _, color := range definedColors {
+		comparison, _ := colorful.Hex(color.hex)
+		if color.minDistance <= finalColor.DistanceLab(comparison) && finalColor.DistanceLab(comparison) <= color.maxDistance {
+			results = append(results, color.name)
+		} else {
+			if (color.maxDistance - finalColor.DistanceLab(comparison)) < 0.003 {
+				fmt.Printf("\nmin: %v\ndist: %v\nmax: %v\n", color.minDistance, finalColor.DistanceLab(comparison), color.maxDistance)
+			}
+		}
+	}
+
+	return finalColor.Hex(), results
 }
 
 func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int) float64 {
@@ -214,6 +292,8 @@ func main() {
 	k := 5
 	numberOfImages := 0
 
+	colorDefinitions := retrieveColorDefinitions("")
+
 	if testingListOfImages {
 		imageLocations := []string{
 			"http://i.imgur.com/WpsnGdF.jpg",
@@ -233,11 +313,11 @@ func main() {
 			clusters := createClusters(k, resizedImg)
 
 			fmt.Printf("\n%v: \n", location)
-			analyzeCluster(clusters[0])
-			analyzeCluster(clusters[1])
-			analyzeCluster(clusters[2])
-			analyzeCluster(clusters[3])
-			analyzeCluster(clusters[4])
+			analyzeCluster(clusters[0], colorDefinitions)
+			analyzeCluster(clusters[1], colorDefinitions)
+			analyzeCluster(clusters[2], colorDefinitions)
+			analyzeCluster(clusters[3], colorDefinitions)
+			analyzeCluster(clusters[4], colorDefinitions)
 
 			deleteFileByLocation(saveAs)
 		}
@@ -252,32 +332,76 @@ func main() {
 		reader := csv.NewReader(sourceFile)
 		lines, err := reader.ReadAll()
 		closeIfError(err)
+		err = writer.Write([]string{
+			"SKU",
+			"imageUrl",
+			"Gen. Color 0",
+			"Matches for 0",
+			"Gen. Color 1",
+			"Matches for 1",
+			"Gen. Color 2",
+			"Matches for 2",
+			"Gen. Color 3",
+			"Matches for 3",
+			"Gen. Color 4",
+			"Matches for 4",
+		})
+		closeIfError(err)
 
-		for _, line := range lines {
-			sku := line[0]
-			imageUrl := line[1]
+		for lineNumber, line := range lines {
+			if lineNumber > 10 {
+				sku := line[0]
+				imageUrl := line[1]
 
-			downloadImageFromUrl(imageUrl, saveAs)
-			img, shouldSkip := openImage(saveAs)
+				downloadImageFromUrl(imageUrl, saveAs)
+				img, shouldSkip := openImage(saveAs)
 
-			if !shouldSkip {
-				croppedImg := cropImage(img, 50, "cropped.png")
-				resizedImg := resizeImage(croppedImg, 200, "resized.png")
-				clusters := createClusters(k, resizedImg)
+				if !shouldSkip {
+					croppedImg := cropImage(img, 50, "cropped.png")
+					resizedImg := resizeImage(croppedImg, 200, "resized.png")
+					clusters := createClusters(k, resizedImg)
 
-				err := writer.Write([]string{
-					sku,
-					imageUrl,
-					analyzeCluster(clusters[0]),
-					analyzeCluster(clusters[1]),
-					analyzeCluster(clusters[2]),
-					analyzeCluster(clusters[3]),
-					analyzeCluster(clusters[4]),
-				})
-				closeIfError(err)
+					color0, matches0 := analyzeCluster(clusters[0], colorDefinitions)
+					color1, matches1 := analyzeCluster(clusters[1], colorDefinitions)
+					color2, matches2 := analyzeCluster(clusters[2], colorDefinitions)
+					color3, matches3 := analyzeCluster(clusters[3], colorDefinitions)
+					color4, matches4 := analyzeCluster(clusters[4], colorDefinitions)
 
-				deleteFileByLocation(saveAs)
-				numberOfImages += 1
+					err := writer.Write([]string{
+						sku,
+						imageUrl,
+						color0,
+						strings.Join(matches0, ","),
+						color1,
+						strings.Join(matches1, ","),
+						color2,
+						strings.Join(matches2, ","),
+						color3,
+						strings.Join(matches3, ","),
+						color4,
+						strings.Join(matches4, ","),
+					})
+					closeIfError(err)
+
+					deleteFileByLocation(saveAs)
+					numberOfImages += 1
+				} else {
+					err := writer.Write([]string{
+						sku,
+						imageUrl,
+						"image",
+						"skipped",
+						"because",
+						"of",
+						"an",
+						"unknown",
+						"format",
+						"error",
+						"sorry!",
+						":(",
+					})
+					closeIfError(err)
+				}
 			}
 		}
 		writer.Flush()
@@ -292,11 +416,11 @@ func main() {
 		clusters := createClusters(k, resizedImg)
 
 		fmt.Printf("\n%v: \n", url)
-		analyzeCluster(clusters[0])
-		analyzeCluster(clusters[1])
-		analyzeCluster(clusters[2])
-		analyzeCluster(clusters[3])
-		analyzeCluster(clusters[4])
+		analyzeCluster(clusters[0], colorDefinitions)
+		analyzeCluster(clusters[1], colorDefinitions)
+		analyzeCluster(clusters[2], colorDefinitions)
+		analyzeCluster(clusters[3], colorDefinitions)
+		analyzeCluster(clusters[4], colorDefinitions)
 
 		deleteFileByLocation(saveAs)
 	}
