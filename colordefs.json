@@ -1,126 +1,156 @@
-"Black": {
-    "name": "Black",
-    "minHue": 0.0,
-    "maxHue": 360.0,
-    "minSaturation": 0.0,
-    "maxSaturation": 360.0,
-    "minLightness": 0.0,
-    "maxLightness": 8.0
-},
-"Brown": {
-    "name": "Brown",
-    "minHue": 10.0,
-    "maxHue": 45.0,
-    "minSaturation": 75.0,
-    "maxSaturation": 100.0,
-    "minLightness": 19.0,
-    "maxLightness": 34.0
-},
-"Blue": {
-    "name": "Blue",
-    "minHue": 161.0,
-    "maxHue": 255.0,
-    "minSaturation": 35.0,
-    "maxSaturation": 100.0,
-    "minLightness": 20.0,
-    "maxLightness": 75.0
-},
-"Gold": {
-    "name": "Gold",
-    "minHue": 45.0,
-    "maxHue": 55.0,
-    "minSaturation": 80.0,
-    "maxSaturation": 100.0,
-    "minLightness": 45.0,
-    "maxLightness": 65.0
-},
-"Gray": {
-    "name": "Gray",
-    "minHue": 0.0,
-    "maxHue": 360.0,
-    "minSaturation": 0.0,
-    "maxSaturation": 20.0,
-    "minLightness": 15.0,
-    "maxLightness": 20.0
-},
-"Green": {
-    "name": "Green",
-    "minHue": 65.0,
-    "maxHue": 141.0,
-    "minSaturation": 45.0,
-    "maxSaturation": 100.0,
-    "minLightness": 20.0,
-    "maxLightness": 75.0
-},
-"Orange": {
-    "name": "Orange",
-    "minHue": 18.0,
-    "maxHue": 39.0,
-    "minSaturation": 70.0,
-    "maxSaturation": 100.0,
-    "minLightness": 20.0,
-    "maxLightness": 75.0
-},
-"Pink": {
-    "name": "Pink",
-    "minHue": 290.0,
-    "maxHue": 347.0,
-    "minSaturation": 30.0,
-    "maxSaturation": 100.0,
-    "minLightness": 20.0,
-    "maxLightness": 75.0
-},
-"Purple": {
-    "name": "Purple",
-    "minHue": 255.0,
-    "maxHue": 290.0,
-    "minSaturation": 25.0,
-    "maxSaturation": 100.0,
-    "minLightness": 20.0,
-    "maxLightness": 75.0
-},
-"Red": {
-    "name": "Red",
-    "minHue": 0.0,
-    "maxHue": 18.0,
-    "minSaturation": 65.0,
-    "maxSaturation": 100.0,
-    "minLightness": 20.0,
-    "maxLightness": 75.0
-},
-"Red": {
-    "name": "Red",
-    "minHue": 347.0,
-    "maxHue": 360.0,
-    "minSaturation": 65.0,
-    "maxSaturation": 100.0,
-    "minLightness": 20.0,
-    "maxLightness": 75.0
-},
-"Tan": {
-    "name": "Tan",
-    "minHue": 10.0,
-    "maxHue": 18.0,
-    "minSaturation": 45.0,
-    "maxSaturation": 100.0,
-    "minLightness": 34.0,
-    "maxLightness": 60.0
-},
-"White": {
-    "name": "White",
-    "minHue": 0.0,
-    "maxHue": 360.0,
-    "minSaturation": 0.0,
-    "maxSaturation": 360.0,
-    "minLightness": 90.0,
-    "maxLightness": 100.0
-},
-"Yellow": {
-    "name": "Yellow",
-    "minHue": 39.0,
-    "maxHue": 68.0,
-    "minSaturation": 75.0,
-    "maxSaturation": 100.0,
-    "minLightness": 20.0,
-    "maxLightness": 75.0
+{
+    "Black": {
+        "name": "Black",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 0.0,
+        "maxHue": 360.0,
+        "minSaturation": 0.0,
+        "maxSaturation": 100.0,
+        "minLightness": 0.0,
+        "maxLightness": 8.0
+    },
+    "Brown": {
+        "name": "Brown",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 10.0,
+        "maxHue": 45.0,
+        "minSaturation": 75.0,
+        "maxSaturation": 100.0,
+        "minLightness": 19.0,
+        "maxLightness": 34.0
+    },
+    "Blue": {
+        "name": "Blue",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 161.0,
+        "maxHue": 255.0,
+        "minSaturation": 35.0,
+        "maxSaturation": 100.0,
+        "minLightness": 20.0,
+        "maxLightness": 75.0
+    },
+    "Gold": {
+        "name": "Gold",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 45.0,
+        "maxHue": 55.0,
+        "minSaturation": 80.0,
+        "maxSaturation": 100.0,
+        "minLightness": 45.0,
+        "maxLightness": 65.0
+    },
+    "Gray": {
+        "name": "Gray",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 0.0,
+        "maxHue": 360.0,
+        "minSaturation": 0.0,
+        "maxSaturation": 20.0,
+        "minLightness": 15.0,
+        "maxLightness": 20.0
+    },
+    "Green": {
+        "name": "Green",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 65.0,
+        "maxHue": 141.0,
+        "minSaturation": 45.0,
+        "maxSaturation": 100.0,
+        "minLightness": 20.0,
+        "maxLightness": 75.0
+    },
+    "Orange": {
+        "name": "Orange",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 18.0,
+        "maxHue": 39.0,
+        "minSaturation": 70.0,
+        "maxSaturation": 100.0,
+        "minLightness": 20.0,
+        "maxLightness": 75.0
+    },
+    "Pink": {
+        "name": "Pink",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 290.0,
+        "maxHue": 347.0,
+        "minSaturation": 30.0,
+        "maxSaturation": 100.0,
+        "minLightness": 20.0,
+        "maxLightness": 75.0
+    },
+    "Purple": {
+        "name": "Purple",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 255.0,
+        "maxHue": 290.0,
+        "minSaturation": 25.0,
+        "maxSaturation": 100.0,
+        "minLightness": 20.0,
+        "maxLightness": 75.0
+    },
+    "Red": {
+        "name": "Red",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 0.0,
+        "maxHue": 18.0,
+        "minSaturation": 65.0,
+        "maxSaturation": 100.0,
+        "minLightness": 20.0,
+        "maxLightness": 75.0
+    },
+    "Red2": {
+        "name": "Red",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 347.0,
+        "maxHue": 360.0,
+        "minSaturation": 65.0,
+        "maxSaturation": 100.0,
+        "minLightness": 20.0,
+        "maxLightness": 75.0
+    },
+    "Tan": {
+        "name": "Tan",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 10.0,
+        "maxHue": 18.0,
+        "minSaturation": 45.0,
+        "maxSaturation": 100.0,
+        "minLightness": 34.0,
+        "maxLightness": 60.0
+    },
+    "White": {
+        "name": "White",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 0.0,
+        "maxHue": 360.0,
+        "minSaturation": 0.0,
+        "maxSaturation": 100.0,
+        "minLightness": 90.0,
+        "maxLightness": 100.0
+    },
+    "Yellow": {
+        "name": "Yellow",
+        "minHex": "",
+        "maxHex": "",
+        "minHue": 39.0,
+        "maxHue": 68.0,
+        "minSaturation": 75.0,
+        "maxSaturation": 100.0,
+        "minLightness": 20.0,
+        "maxLightness": 75.0
+    }
 }

@@ -1,28 +1,30 @@
 import json
 import math
 import statistics
-from webcolors import rgb_to_hex, hex_to_rgb
+import colour
+import colorsys
+from webcolors import rgb_to_hex
 
 colors = None
-with open("colors.json") as colorfile:
+with open("colordefs.json") as colorfile:
     colors = json.load(colorfile)
 
 for color in colors.items():
-    hex_color = color[1]['color']
-    variance = .01 * color[1]['variance']
-    max_color = [0, 0, 0]
-    min_color = [0, 0, 0]
-    color_value = hex_to_rgb(hex_color)
-    for i in range(len(color_value)):
-        min_color[i] = statistics.median([0, math.floor(color_value[i] - (color_value[i] * variance)), 255])
-        max_color[i] = statistics.median([0, math.ceil(color_value[i] - (color_value[i] * variance)), 255])
+    
+    minHue = color[1]["minHue"]/360
+    maxHue = color[1]["maxHue"]/360
+    minSaturation = color[1]["minSaturation"]/100
+    maxSaturation = color[1]["maxSaturation"]/100
+    minLightness = color[1]["minLightness"]/100
+    maxLightness = color[1]["maxLightness"]/100
 
-    print("\n{0}".format(color[0]))
-    print(rgb_to_hex(min_color))
-    print(hex_color)
-    print(rgb_to_hex(max_color))
+    print("\n", color[0])
+    
+    minColor = colour.Color(hsl=(minHue, minSaturation, minLightness))
+    maxColor = colour.Color(hsl=(maxHue, maxSaturation, maxLightness))
 
-    print("\n{0}".format(color[0]))
-    print(min_color)
-    print(color_value)
-    print(max_color)
+    minHSV = colorsys.rgb_to_hsv(minColor.rgb[0], minColor.rgb[1], minColor.rgb[2])
+    maxHSV = colorsys.rgb_to_hsv(maxColor.rgb[0], maxColor.rgb[1], maxColor.rgb[2])
+
+    print("[{0}, {1}, {2}]".format(int(minHSV[0]*360), minHSV[1], minHSV[2]))
+    print("[{0}, {1}, {2}]".format(int(maxHSV[0]*360), maxHSV[1], maxHSV[2]))

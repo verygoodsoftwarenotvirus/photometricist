@@ -1,0 +1,128 @@
+{
+    {
+        "name": "Black",
+        "minHue": 0.0,
+        "maxHue": 0.0,
+        "minSaturation": 0.0,
+        "maxSaturation": 1.0,
+        "minValue": 0.0,
+        "maxValue": 0.16
+    },
+    {
+        "name": "Brown",
+        "minHue": 9.0,
+        "maxHue": 45.0,
+        "minSaturation": 0.857142,
+        "maxSaturation": 1.0,
+        "minValue": 0.3325,
+        "maxValue": 0.68
+    },
+    {
+        "name": "Blue",
+        "minHue": 161.0,
+        "maxHue": 255.0,
+        "minSaturation": 0.5185,
+        "maxSaturation": 0.5,
+        "minValue": 0.27,
+        "maxValue": 1.0
+    },
+    {
+        "name": "Gold",
+        "minHue": 45.0,
+        "maxHue": 55.0,
+        "minSaturation": 0.8,
+        "maxSaturation": 0.69,
+        "minValue": 0.81,
+        "maxValue": 0.99
+    },
+    {
+        "name": "Gray",
+        "minHue": 0.0,
+        "maxHue": 0.0,
+        "minSaturation": 0.0,
+        "maxSaturation": 0.3,
+        "minValue": 0.15,
+        "maxValue": 0.24
+    },
+    {
+        "name": "Green",
+        "minHue": 64.0,
+        "maxHue": 141.0,
+        "minSaturation": 0.620689,
+        "maxSaturation": 0.5,
+        "minValue": 0.29,
+        "maxValue": 1.0
+    },
+    {
+        "name": "Orange",
+        "minHue": 18.0,
+        "maxHue": 38.0,
+        "minSaturation": 0.823529,
+        "maxSaturation": 0.5,
+        "minValue": 0.34,
+        "maxValue": 1.0
+    },
+    {
+        "name": "Pink",
+        "minHue": 289.0,
+        "maxHue": 347.0,
+        "minSaturation": 0.461538,
+        "maxSaturation": 0.5,
+        "minValue": 0.26,
+        "maxValue": 1.0
+    },
+    {
+        "name": "Purple",
+        "minHue": 255.0,
+        "maxHue": 289.0,
+        "minSaturation": 0.39,
+        "maxSaturation": 0.5,
+        "minValue": 0.25,
+        "maxValue": 1.0
+    },
+    {
+        "name": "Red",
+        "minHue": 0.0,
+        "maxHue": 18.0,
+        "minSaturation": 0.78,
+        "maxSaturation": 0.5,
+        "minValue": 0.33,
+        "maxValue": 1.0
+    },
+    {
+        "name": "Red",
+        "minHue": 347.0,
+        "maxHue": 360.0,
+        "minSaturation": 0.78,
+        "maxSaturation": 0.5,
+        "minValue": 0.3,
+        "maxValue": 1.0
+    },
+    {
+        "name": "Tan",
+        "minHue": 9.0,
+        "maxHue": 17.0,
+        "minSaturation": 0.620689,
+        "maxSaturation": 0.8,
+        "minValue": 0.493,
+        "maxValue": 1.0
+    },
+    {
+        "name": "White",
+        "minHue": 0.0,
+        "maxHue": 0.0,
+        "minSaturation": 0.0,
+        "maxSaturation": 0.0,
+        "minValue": 0.9,
+        "maxValue": 1.0
+    },
+    {
+        "name": "Yellow",
+        "minHue": 39.0,
+        "maxHue": 67.0,
+        "minSaturation": 0.857142,
+        "maxSaturation": 0.5,
+        "minValue": 0.35,
+        "maxValue": 1.0
+    }
+}

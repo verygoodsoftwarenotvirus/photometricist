@@ -23,94 +23,147 @@ import (
 import _ "image/jpeg"
 import _ "image/gif"
 
-type ColorDefinition struct {
-	name        string
-	hex         string
-	minDistance float64
-	maxDistance float64
+type ColorBoundary struct {
+    name string
+    minHue float64
+    maxHue float64
+    minSaturation float64
+    maxSaturation float64
+    minValue float64
+    maxValue float64
 }
 
-func retrieveColorDefinitions(filename string) []ColorDefinition {
-	// This is gross and needs to be automated.
-	Black := ColorDefinition{
-		name:        "Black",
-		hex:         "#191818",
-		minDistance: 0.023842433019540137,
-		maxDistance: 0.02104211515520766,
-	}
-	Brown := ColorDefinition{
-		name:        "Brown",
-		hex:         "#795000",
-		minDistance: 0.19809101648616032,
-		maxDistance: 0.19210336287428736,
-	}
-	Blue := ColorDefinition{
-		name:        "Blue",
-		hex:         "#3F4AFF",
-		minDistance: 0.4641466052266115,
-		maxDistance: 0.4633987252122273,
-	}
-	Gold := ColorDefinition{
-		name:        "Gold",
-		hex:         "#C1B000",
-		minDistance: 0.13133286731508037,
-		maxDistance: 0.1264689296432074,
-	}
-	Gray := ColorDefinition{
-		name:        "Gray",
-		hex:         "#7D7C7A",
-		minDistance: 0.15423603423913348,
-		maxDistance: 0.15004028649601187,
-	}
-	Green := ColorDefinition{
-		name:        "Green",
-		hex:         "#1CBD2A",
-		minDistance: 0.7492784109976135,
-		maxDistance: 0.7456682300440184,
-	}
-	Orange := ColorDefinition{
-		name:        "Orange",
-		hex:         "#C27B13",
-		minDistance: 0.3696758700641386,
-		maxDistance: 0.3666353779425447,
-	}
-	Pink := ColorDefinition{
-		name:        "Pink",
-		hex:         "#FFBECC",
-		minDistance: 0.14258279796428422,
-		maxDistance: 0.13907449495014637,
-	}
-	Purple := ColorDefinition{
-		name:        "Purple",
-		hex:         "#9E4DFF",
-		minDistance: 0.28147884511085836,
-		maxDistance: 0.2798940121040469,
-	}
-	Red := ColorDefinition{
-		name:        "Red",
-		hex:         "#FF260C",
-		minDistance: 0.6663975631872985,
-		maxDistance: 0.6639093437480922,
-	}
-	Tan := ColorDefinition{
-		name:        "Tan",
-		hex:         "#D18D12",
-		minDistance: 0.0981207988444481,
-		maxDistance: 0.0948660417438293,
-	}
-	White := ColorDefinition{
-		name:        "White",
-		hex:         "#FFFDF7",
-		minDistance: 0.03822537621306147,
-		maxDistance: 0.03477705237396113,
-	}
-	Yellow := ColorDefinition{
-		name:        "Yellow",
-		hex:         "#FFF000",
-		minDistance: 0.20183243554226693,
-		maxDistance: 0.1971941953430347,
-	}
-	return []ColorDefinition{Black, Brown, Blue, Gold, Gray, Green, Orange, Pink, Purple, Red, Tan, White, Yellow}
+type ColorBoundaries []ColorBoundary
+
+func retrieveColorBoundaries() ColorBoundaries{
+    return ColorBoundaries{
+        {
+            name: "Black",
+            minHue: 0.0,
+            maxHue: 0.0,
+            minSaturation: 0.0,
+            maxSaturation: 1.0,
+            minValue: 0.0,
+            maxValue: 0.16,
+        },
+        {
+            name: "Brown",
+            minHue: 9.0,
+            maxHue: 45.0,
+            minSaturation: 0.857142,
+            maxSaturation: 1.0,
+            minValue: 0.3325,
+            maxValue: 0.68,
+        },
+        {
+            name: "Blue",
+            minHue: 161.0,
+            maxHue: 255.0,
+            minSaturation: 0.5185,
+            maxSaturation: 0.5,
+            minValue: 0.27,
+            maxValue: 1.0,
+        },
+        {
+            name: "Gold",
+            minHue: 45.0,
+            maxHue: 55.0,
+            minSaturation: 0.8,
+            maxSaturation: 0.69,
+            minValue: 0.81,
+            maxValue: 0.99,
+        },
+        {
+            name: "Gray",
+            minHue: 0.0,
+            maxHue: 0.0,
+            minSaturation: 0.0,
+            maxSaturation: 0.3,
+            minValue: 0.15,
+            maxValue: 0.24,
+        },
+        {
+            name: "Green",
+            minHue: 64.0,
+            maxHue: 141.0,
+            minSaturation: 0.620689,
+            maxSaturation: 0.5,
+            minValue: 0.29,
+            maxValue: 1.0,
+        },
+        {
+            name: "Orange",
+            minHue: 18.0,
+            maxHue: 38.0,
+            minSaturation: 0.823529,
+            maxSaturation: 0.5,
+            minValue: 0.34,
+            maxValue: 1.0,
+        },
+        {
+            name: "Pink",
+            minHue: 289.0,
+            maxHue: 347.0,
+            minSaturation: 0.461538,
+            maxSaturation: 0.5,
+            minValue: 0.26,
+            maxValue: 1.0,
+        },
+        {
+            name: "Purple",
+            minHue: 255.0,
+            maxHue: 289.0,
+            minSaturation: 0.39,
+            maxSaturation: 0.5,
+            minValue: 0.25,
+            maxValue: 1.0,
+        },
+        {
+            name: "Red",
+            minHue: 0.0,
+            maxHue: 18.0,
+            minSaturation: 0.78,
+            maxSaturation: 0.5,
+            minValue: 0.33,
+            maxValue: 1.0,
+        },
+        {
+            name: "Red",
+            minHue: 347.0,
+            maxHue: 360.0,
+            minSaturation: 0.78,
+            maxSaturation: 0.5,
+            minValue: 0.3,
+            maxValue: 1.0,
+        },
+        {
+            name: "Tan",
+            minHue: 9.0,
+            maxHue: 17.0,
+            minSaturation: 0.620689,
+            maxSaturation: 0.8,
+            minValue: 0.493,
+            maxValue: 1.0,
+        },
+        {
+            name: "White",
+            minHue: 0.0,
+            maxHue: 0.0,
+            minSaturation: 0.0,
+            maxSaturation: 0.0,
+            minValue: 0.9,
+            maxValue: 1.0,
+        },
+        {
+            name: "Yellow",
+            minHue: 39.0,
+            maxHue: 67.0,
+            minSaturation: 0.857142,
+            maxSaturation: 0.5,
+            minValue: 0.35,
+            maxValue: 1.0,
+        },
+    }
 }
 
 func downloadImageFromUrl(url string, saveAs string) {
@@ -135,7 +188,7 @@ func deleteFileByLocation(location string) {
 
 func openImage(filename string) (result image.Image, skip bool) {
 	imgfile, err := os.Open(filename)
-	shouldSkip := closeIfError(err)
+    shouldSkip := skipIfError(err)
 	if shouldSkip {
 		return nil, true
 	}
@@ -143,7 +196,7 @@ func openImage(filename string) (result image.Image, skip bool) {
 	defer imgfile.Close()
 
 	img, _, err := image.Decode(imgfile)
-	shouldSkip = closeIfError(err)
+	shouldSkip = skipIfError(err)
 	if shouldSkip {
 		return nil, true
 	}
@@ -239,7 +292,7 @@ func createClusters(numberOfClusters int, img image.Image) map[int][]color.Color
 	return clusters
 }
 
-func analyzeCluster(cluster []color.Color, definedColors []ColorDefinition) (generatedColor string, matches []string) {
+func analyzeCluster(cluster []color.Color, definedColors ColorBoundaries) (generatedColor string, matches []string) {
 	redTotal := float64(0.0)
 	greenTotal := float64(0.0)
 	blueTotal := float64(0.0)
@@ -256,14 +309,19 @@ func analyzeCluster(cluster []color.Color, definedColors []ColorDefinition) (gen
 	results := []string{}
 
 	for _, color := range definedColors {
-		comparison, _ := colorful.Hex(color.hex)
-		if color.minDistance <= finalColor.DistanceLab(comparison) && finalColor.DistanceLab(comparison) <= color.maxDistance {
-			results = append(results, color.name)
-		} else {
-			if (color.maxDistance - finalColor.DistanceLab(comparison)) < 0.003 {
-				fmt.Printf("\nmin: %v\ndist: %v\nmax: %v\n", color.minDistance, finalColor.DistanceLab(comparison), color.maxDistance)
-			}
-		}
+        h, s, v := finalColor.Hsv()
+
+        if color.minHue <= h && h <= color.maxHue && color.minValue <= v && v <= color.maxValue{
+            if color.minSaturation < color.maxSaturation{
+                if color.minSaturation <= s && s <= color.maxSaturation{
+                    results = append(results, color.name)
+                }
+            } else {
+                if color.minSaturation >= s && s >= color.maxSaturation{
+                    results = append(results, color.name)
+                }
+            }
+        }
 	}
 
 	return finalColor.Hex(), results
@@ -274,13 +332,20 @@ func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int) float64 {
 	return math.Sqrt(math.Pow(float64(qOne-pOne), 2) + math.Pow(float64(qTwo-pTwo), 2))
 }
 
-func closeIfError(err error) bool {
+func skipIfError(err error) bool {
+    if err != nil {
+        fmt.Println(err)
+        return true
+    }
+    return false
+}
+
+func closeIfError(err error) {
 	if err != nil {
-		// log.Fatal(err)
+		log.Fatal(err)
 		fmt.Println(err)
-		return true
+        os.Exit(1)
 	}
-	return false
 }
 
 func main() {
@@ -291,8 +356,9 @@ func main() {
 	testingListOfImages := false
 	k := 5
 	numberOfImages := 0
+    numberOfColors := 0
 
-	colorDefinitions := retrieveColorDefinitions("")
+	colorDefinitions := retrieveColorBoundaries()
 
 	if testingListOfImages {
 		imageLocations := []string{
@@ -322,8 +388,8 @@ func main() {
 			deleteFileByLocation(saveAs)
 		}
 	} else if testingCSV {
-		csvfile, err := os.Create("slt_output.csv")
-		closeIfError(err)
+        csvfile, err := os.Create("slt_output.csv")
+        closeIfError(err)
 
 		sourceFile, err := os.Open("skusandimages.csv")
 		closeIfError(err)
@@ -349,7 +415,9 @@ func main() {
 		closeIfError(err)
 
 		for lineNumber, line := range lines {
-			if lineNumber > 10 {
+            if lineNumber == 0{
+                // skip headers
+            } else if lineNumber < 1000 {
 				sku := line[0]
 				imageUrl := line[1]
 
@@ -385,22 +453,19 @@ func main() {
 
 					deleteFileByLocation(saveAs)
 					numberOfImages += 1
+                    numberOfColors += k
 				} else {
-					err := writer.Write([]string{
-						sku,
-						imageUrl,
-						"image",
-						"skipped",
-						"because",
-						"of",
-						"an",
-						"unknown",
-						"format",
-						"error",
-						"sorry!",
-						":(",
-					})
-					closeIfError(err)
+                    err := writer.Write([]string{
+                        "",
+                    })
+                    closeIfError(err)
+					// err := writer.Write([]string{
+					// 	sku,
+					// 	imageUrl,
+					// 	"image",
+					// 	"skipped",
+					// })
+					// closeIfError(err)
 				}
 			}
 		}
@@ -425,5 +490,5 @@ func main() {
 		deleteFileByLocation(saveAs)
 	}
 	elapsed := time.Since(start)
-	log.Printf("Processing %v images took %s", numberOfImages, elapsed)
+	log.Printf("Processing %v colors from %v images took %s", numberOfColors, numberOfImages, elapsed)
 }
