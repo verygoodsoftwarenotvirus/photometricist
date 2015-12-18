@@ -1,52 +1,58 @@
-"Black": {
-    "color": "#191818",
-    "variance": 100.0
-},
-"Brown": {
-    "color": "#795000",
-    "variance": 36.0
-},
-"Blue": {
-    "color": "#3F4AFF",
-    "variance": 46.0
-},
-"Gold": {
-    "color": "#C1B000",
-    "variance": 15.0
-},
-"Gray": {
-    "color": "#7D7C7A",
-    "variance": 100.0
-},
-"Green": {
-    "color": "#1CBD2A",
-    "variance": 73.0
-},
-"Orange": {
-    "color": "#C27B13",
-    "variance": 47.0
-},
-"Pink": {
-    "color": "#FFBECC",
-    "variance": 18.0
-},
-"Purple": {
-    "color": "#9E4DFF",
-    "variance": 29.0
-},
-"Red": {
-    "color": "#FF260C",
-    "variance": 63.0
-},
-"Tan": {
-    "color": "#D18D12",
-    "variance": 12.0
-},
-"White": {
-    "color": "#FFFDF7",
-    "variance": 4.0
-},
-"Yellow": {
-    "color": "#FFF000",
-    "variance": 18.0
+{
+    "Black": {
+        "minHex": "#000000",
+        "maxHex": "#290000"
+    },
+    "Brown": {
+        "minHex": "#55180c",
+        "maxHex": "#ad8200"
+    },
+    "Blue": {
+        "minHex": "#21453a",
+        "maxHex": "#9f7fff"
+    },
+    "Gold": {
+        "minHex": "#cfa117",
+        "maxHex": "#fff04c"
+    },
+    "Gray": {
+        "minHex": "#262626",
+        "maxHex": "#3d2929"
+    },
+    "Green": {
+        "minHex": "#464a1c",
+        "maxHex": "#7fffac"
+    },
+    "Orange": {
+        "minHex": "#57250f",
+        "maxHex": "#ffd27f"
+    },
+    "Pink": {
+        "minHex": "#3d2442",
+        "maxHex": "#ff7f9b"
+    },
+    "Purple": {
+        "minHex": "#2d2640",
+        "maxHex": "#ea7fff"
+    },
+    "Red": {
+        "minHex": "#541212",
+        "maxHex": "#ffa67f"
+    },
+    "Red2": {
+        "minHex": "#541220",
+        "maxHex": "#ff7f7f"
+    },
+    "Tan": {
+        "minHex": "#7e3d30",
+        "maxHex": "#ff7033"
+    },
+    "White": {
+        "minHex": "#e5e5e5",
+        "maxHex": "#ffffff"
+    },
+    "Yellow": {
+        "minHex": "#593e0d",
+        "maxHex": "#eeff7f"
+    }
 }

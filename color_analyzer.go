@@ -15,7 +15,8 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"strings"
+	// "strings"
+	"sync"
 	"time"
 )
 
@@ -24,146 +25,146 @@ import _ "image/jpeg"
 import _ "image/gif"
 
 type ColorBoundary struct {
-    name string
-    minHue float64
-    maxHue float64
-    minSaturation float64
-    maxSaturation float64
-    minValue float64
-    maxValue float64
+	name          string
+	minHue        float64
+	maxHue        float64
+	minSaturation float64
+	maxSaturation float64
+	minValue      float64
+	maxValue      float64
 }
 
 type ColorBoundaries []ColorBoundary
 
-func retrieveColorBoundaries() ColorBoundaries{
-    return ColorBoundaries{
-        {
-            name: "Black",
-            minHue: 0.0,
-            maxHue: 0.0,
-            minSaturation: 0.0,
-            maxSaturation: 1.0,
-            minValue: 0.0,
-            maxValue: 0.16,
-        },
-        {
-            name: "Brown",
-            minHue: 9.0,
-            maxHue: 45.0,
-            minSaturation: 0.857142,
-            maxSaturation: 1.0,
-            minValue: 0.3325,
-            maxValue: 0.68,
-        },
-        {
-            name: "Blue",
-            minHue: 161.0,
-            maxHue: 255.0,
-            minSaturation: 0.5185,
-            maxSaturation: 0.5,
-            minValue: 0.27,
-            maxValue: 1.0,
-        },
-        {
-            name: "Gold",
-            minHue: 45.0,
-            maxHue: 55.0,
-            minSaturation: 0.8,
-            maxSaturation: 0.69,
-            minValue: 0.81,
-            maxValue: 0.99,
-        },
-        {
-            name: "Gray",
-            minHue: 0.0,
-            maxHue: 0.0,
-            minSaturation: 0.0,
-            maxSaturation: 0.3,
-            minValue: 0.15,
-            maxValue: 0.24,
-        },
-        {
-            name: "Green",
-            minHue: 64.0,
-            maxHue: 141.0,
-            minSaturation: 0.620689,
-            maxSaturation: 0.5,
-            minValue: 0.29,
-            maxValue: 1.0,
-        },
-        {
-            name: "Orange",
-            minHue: 18.0,
-            maxHue: 38.0,
-            minSaturation: 0.823529,
-            maxSaturation: 0.5,
-            minValue: 0.34,
-            maxValue: 1.0,
-        },
-        {
-            name: "Pink",
-            minHue: 289.0,
-            maxHue: 347.0,
-            minSaturation: 0.461538,
-            maxSaturation: 0.5,
-            minValue: 0.26,
-            maxValue: 1.0,
-        },
-        {
-            name: "Purple",
-            minHue: 255.0,
-            maxHue: 289.0,
-            minSaturation: 0.39,
-            maxSaturation: 0.5,
-            minValue: 0.25,
-            maxValue: 1.0,
-        },
-        {
-            name: "Red",
-            minHue: 0.0,
-            maxHue: 18.0,
-            minSaturation: 0.78,
-            maxSaturation: 0.5,
-            minValue: 0.33,
-            maxValue: 1.0,
-        },
-        {
-            name: "Red",
-            minHue: 347.0,
-            maxHue: 360.0,
-            minSaturation: 0.78,
-            maxSaturation: 0.5,
-            minValue: 0.3,
-            maxValue: 1.0,
-        },
-        {
-            name: "Tan",
-            minHue: 9.0,
-            maxHue: 17.0,
-            minSaturation: 0.620689,
-            maxSaturation: 0.8,
-            minValue: 0.493,
-            maxValue: 1.0,
-        },
-        {
-            name: "White",
-            minHue: 0.0,
-            maxHue: 0.0,
-            minSaturation: 0.0,
-            maxSaturation: 0.0,
-            minValue: 0.9,
-            maxValue: 1.0,
-        },
-        {
-            name: "Yellow",
-            minHue: 39.0,
-            maxHue: 67.0,
-            minSaturation: 0.857142,
-            maxSaturation: 0.5,
-            minValue: 0.35,
-            maxValue: 1.0,
-        },
-    }
+func retrieveColorBoundaries() ColorBoundaries {
+	return ColorBoundaries{
+		{
+			name:          "Black",
+			minHue:        0.0,
+			maxHue:        0.0,
+			minSaturation: 0.0,
+			maxSaturation: 1.0,
+			minValue:      0.0,
+			maxValue:      0.16,
+		},
+		{
+			name:          "Brown",
+			minHue:        9.0,
+			maxHue:        45.0,
+			minSaturation: 0.857142,
+			maxSaturation: 1.0,
+			minValue:      0.3325,
+			maxValue:      0.68,
+		},
+		{
+			name:          "Blue",
+			minHue:        161.0,
+			maxHue:        255.0,
+			minSaturation: 0.5185,
+			maxSaturation: 0.5,
+			minValue:      0.27,
+			maxValue:      1.0,
+		},
+		{
+			name:          "Gold",
+			minHue:        45.0,
+			maxHue:        55.0,
+			minSaturation: 0.8,
+			maxSaturation: 0.69,
+			minValue:      0.81,
+			maxValue:      0.99,
+		},
+		{
+			name:          "Gray",
+			minHue:        0.0,
+			maxHue:        0.0,
+			minSaturation: 0.0,
+			maxSaturation: 0.3,
+			minValue:      0.15,
+			maxValue:      0.24,
+		},
+		{
+			name:          "Green",
+			minHue:        64.0,
+			maxHue:        141.0,
+			minSaturation: 0.620689,
+			maxSaturation: 0.5,
+			minValue:      0.29,
+			maxValue:      1.0,
+		},
+		{
+			name:          "Orange",
+			minHue:        18.0,
+			maxHue:        38.0,
+			minSaturation: 0.823529,
+			maxSaturation: 0.5,
+			minValue:      0.34,
+			maxValue:      1.0,
+		},
+		{
+			name:          "Pink",
+			minHue:        289.0,
+			maxHue:        347.0,
+			minSaturation: 0.461538,
+			maxSaturation: 0.5,
+			minValue:      0.26,
+			maxValue:      1.0,
+		},
+		{
+			name:          "Purple",
+			minHue:        255.0,
+			maxHue:        289.0,
+			minSaturation: 0.39,
+			maxSaturation: 0.5,
+			minValue:      0.25,
+			maxValue:      1.0,
+		},
+		{
+			name:          "Red",
+			minHue:        0.0,
+			maxHue:        18.0,
+			minSaturation: 0.78,
+			maxSaturation: 0.5,
+			minValue:      0.33,
+			maxValue:      1.0,
+		},
+		{
+			name:          "Red",
+			minHue:        347.0,
+			maxHue:        360.0,
+			minSaturation: 0.78,
+			maxSaturation: 0.5,
+			minValue:      0.3,
+			maxValue:      1.0,
+		},
+		{
+			name:          "Tan",
+			minHue:        9.0,
+			maxHue:        17.0,
+			minSaturation: 0.620689,
+			maxSaturation: 0.8,
+			minValue:      0.493,
+			maxValue:      1.0,
+		},
+		{
+			name:          "White",
+			minHue:        0.0,
+			maxHue:        0.0,
+			minSaturation: 0.0,
+			maxSaturation: 0.0,
+			minValue:      0.9,
+			maxValue:      1.0,
+		},
+		{
+			name:          "Yellow",
+			minHue:        39.0,
+			maxHue:        67.0,
+			minSaturation: 0.857142,
+			maxSaturation: 0.5,
+			minValue:      0.35,
+			maxValue:      1.0,
+		},
+	}
 }
 
 func downloadImageFromUrl(url string, saveAs string) {
@@ -188,7 +189,7 @@ func deleteFileByLocation(location string) {
 
 func openImage(filename string) (result image.Image, skip bool) {
 	imgfile, err := os.Open(filename)
-    shouldSkip := skipIfError(err)
+	shouldSkip := skipIfError(err)
 	if shouldSkip {
 		return nil, true
 	}
@@ -292,13 +293,13 @@ func createClusters(numberOfClusters int, img image.Image) map[int][]color.Color
 	return clusters
 }
 
-func analyzeCluster(cluster []color.Color, definedColors ColorBoundaries) (generatedColor string, matches []string) {
+func analyzeCluster(clusters map[int][]color.Color, cluster int, definedColors ColorBoundaries, results map[string][]string, wg sync.WaitGroup) {
 	redTotal := float64(0.0)
 	greenTotal := float64(0.0)
 	blueTotal := float64(0.0)
 	pixelTotal := float64(0.0)
-	for pixel := range cluster {
-		r, g, b, _ := cluster[pixel].RGBA()
+	for pixel := range clusters[cluster] {
+		r, g, b, _ := clusters[cluster][pixel].RGBA()
 
 		redTotal += float64(r >> 8)
 		greenTotal += float64(g >> 8)
@@ -306,25 +307,26 @@ func analyzeCluster(cluster []color.Color, definedColors ColorBoundaries) (gener
 		pixelTotal += 1
 	}
 	finalColor := colorful.Color{(redTotal / pixelTotal) / 255.0, (greenTotal / pixelTotal) / 255.0, (blueTotal / pixelTotal) / 255.0}
-	results := []string{}
+	namedResults := []string{}
 
 	for _, color := range definedColors {
-        h, s, v := finalColor.Hsv()
+		h, s, v := finalColor.Hsv()
 
-        if color.minHue <= h && h <= color.maxHue && color.minValue <= v && v <= color.maxValue{
-            if color.minSaturation < color.maxSaturation{
-                if color.minSaturation <= s && s <= color.maxSaturation{
-                    results = append(results, color.name)
-                }
-            } else {
-                if color.minSaturation >= s && s >= color.maxSaturation{
-                    results = append(results, color.name)
-                }
-            }
-        }
+		if color.minHue <= h && h <= color.maxHue && color.minValue <= v && v <= color.maxValue {
+			if color.minSaturation < color.maxSaturation {
+				if color.minSaturation <= s && s <= color.maxSaturation {
+					namedResults = append(namedResults, color.name)
+				}
+			} else {
+				if color.minSaturation >= s && s >= color.maxSaturation {
+					namedResults = append(namedResults, color.name)
+				}
+			}
+		}
 	}
 
-	return finalColor.Hex(), results
+	results[finalColor.Hex()] = namedResults
+	wg.Done()
 }
 
 func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int) float64 {
@@ -333,18 +335,17 @@ func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int) float64 {
 }
 
 func skipIfError(err error) bool {
-    if err != nil {
-        fmt.Println(err)
-        return true
-    }
-    return false
+	if err != nil {
+		fmt.Println(err)
+		return true
+	}
+	return false
 }
 
 func closeIfError(err error) {
 	if err != nil {
-		log.Fatal(err)
 		fmt.Println(err)
-        os.Exit(1)
+		log.Fatal(err)
 	}
 }
 
@@ -352,143 +353,95 @@ func main() {
 	start := time.Now()
 	rand.Seed(time.Now().Unix())
 	saveAs := "sample.png"
-	testingCSV := true
-	testingListOfImages := false
-	k := 5
+	k := 1
 	numberOfImages := 0
-    numberOfColors := 0
+	numberOfColors := 0
 
 	colorDefinitions := retrieveColorBoundaries()
 
-	if testingListOfImages {
-		imageLocations := []string{
-			"http://i.imgur.com/WpsnGdF.jpg",
-			"http://i.imgur.com/0fOqb1G.jpg",
-			"http://i.imgur.com/fKVX14Z.jpg",
-			"http://i.imgur.com/9MaHnRC.jpg",
-			"http://i.imgur.com/weEh6sY.jpg",
-			"http://i.imgur.com/jU8hj6v.png",
-		}
-		for _, location := range imageLocations {
-			downloadImageFromUrl(location, saveAs)
-			img, _ := openImage(saveAs)
+	csvfile, err := os.Create("slt_output.csv")
+	closeIfError(err)
 
+	sourceFile, err := os.Open("skusandimages.csv")
+	closeIfError(err)
+
+	writer := csv.NewWriter(csvfile)
+	reader := csv.NewReader(sourceFile)
+	lines, err := reader.ReadAll()
+	closeIfError(err)
+	err = writer.Write([]string{
+		"SKU",
+		"imageUrl",
+		"Gen. Color 0",
+		"Matches for 0",
+		"Gen. Color 1",
+		"Matches for 1",
+		"Gen. Color 2",
+		"Matches for 2",
+		"Gen. Color 3",
+		"Matches for 3",
+		"Gen. Color 4",
+		"Matches for 4",
+	})
+	closeIfError(err)
+
+	for lineNumber, line := range lines {
+		if lineNumber == 0 {
+			// skip headers
+		}
+		// } else if lineNumber < 1000 {
+		// sku := line[0]
+		imageUrl := line[1]
+
+		downloadImageFromUrl(imageUrl, saveAs)
+		img, shouldSkip := openImage(saveAs)
+
+		if !shouldSkip {
 			croppedImg := cropImage(img, 50, "cropped.png")
 			resizedImg := resizeImage(croppedImg, 200, "resized.png")
-
 			clusters := createClusters(k, resizedImg)
+			results := make(map[string][]string, k)
 
-			fmt.Printf("\n%v: \n", location)
-			analyzeCluster(clusters[0], colorDefinitions)
-			analyzeCluster(clusters[1], colorDefinitions)
-			analyzeCluster(clusters[2], colorDefinitions)
-			analyzeCluster(clusters[3], colorDefinitions)
-			analyzeCluster(clusters[4], colorDefinitions)
+			var wg sync.WaitGroup
+			wg.Add(k)
+
+			go analyzeCluster(clusters, 0, colorDefinitions, results, wg)
+			go analyzeCluster(clusters, 1, colorDefinitions, results, wg)
+			go analyzeCluster(clusters, 2, colorDefinitions, results, wg)
+			go analyzeCluster(clusters, 3, colorDefinitions, results, wg)
+			go analyzeCluster(clusters, 4, colorDefinitions, results, wg)
+
+			wg.Wait()
+			fmt.Println(results)
+
+			// // err := writer.Write([]string{
+			// 	sku,
+			// 	imageUrl,
+			// 	color0,
+			// 	strings.Join(matches0, ","),
+			// 	color1,
+			// 	strings.Join(matches1, ","),
+			// 	color2,
+			// 	strings.Join(matches2, ","),
+			// 	color3,
+			// 	strings.Join(matches3, ","),
+			// 	color4,
+			// 	strings.Join(matches4, ","),
+			// })
+			// closeIfError(err)
 
 			deleteFileByLocation(saveAs)
+			numberOfImages += 1
+			numberOfColors += k
+		} else {
+			err := writer.Write([]string{
+				"",
+			})
+			closeIfError(err)
 		}
-	} else if testingCSV {
-        csvfile, err := os.Create("slt_output.csv")
-        closeIfError(err)
-
-		sourceFile, err := os.Open("skusandimages.csv")
-		closeIfError(err)
-
-		writer := csv.NewWriter(csvfile)
-		reader := csv.NewReader(sourceFile)
-		lines, err := reader.ReadAll()
-		closeIfError(err)
-		err = writer.Write([]string{
-			"SKU",
-			"imageUrl",
-			"Gen. Color 0",
-			"Matches for 0",
-			"Gen. Color 1",
-			"Matches for 1",
-			"Gen. Color 2",
-			"Matches for 2",
-			"Gen. Color 3",
-			"Matches for 3",
-			"Gen. Color 4",
-			"Matches for 4",
-		})
-		closeIfError(err)
-
-		for lineNumber, line := range lines {
-            if lineNumber == 0{
-                // skip headers
-            } else if lineNumber < 1000 {
-				sku := line[0]
-				imageUrl := line[1]
-
-				downloadImageFromUrl(imageUrl, saveAs)
-				img, shouldSkip := openImage(saveAs)
-
-				if !shouldSkip {
-					croppedImg := cropImage(img, 50, "cropped.png")
-					resizedImg := resizeImage(croppedImg, 200, "resized.png")
-					clusters := createClusters(k, resizedImg)
-
-					color0, matches0 := analyzeCluster(clusters[0], colorDefinitions)
-					color1, matches1 := analyzeCluster(clusters[1], colorDefinitions)
-					color2, matches2 := analyzeCluster(clusters[2], colorDefinitions)
-					color3, matches3 := analyzeCluster(clusters[3], colorDefinitions)
-					color4, matches4 := analyzeCluster(clusters[4], colorDefinitions)
-
-					err := writer.Write([]string{
-						sku,
-						imageUrl,
-						color0,
-						strings.Join(matches0, ","),
-						color1,
-						strings.Join(matches1, ","),
-						color2,
-						strings.Join(matches2, ","),
-						color3,
-						strings.Join(matches3, ","),
-						color4,
-						strings.Join(matches4, ","),
-					})
-					closeIfError(err)
-
-					deleteFileByLocation(saveAs)
-					numberOfImages += 1
-                    numberOfColors += k
-				} else {
-                    err := writer.Write([]string{
-                        "",
-                    })
-                    closeIfError(err)
-					// err := writer.Write([]string{
-					// 	sku,
-					// 	imageUrl,
-					// 	"image",
-					// 	"skipped",
-					// })
-					// closeIfError(err)
-				}
-			}
-		}
-		writer.Flush()
-	} else {
-		url := "http://i.imgur.com/WpsnGdF.jpg"
-		downloadImageFromUrl(url, saveAs)
-		img, _ := openImage(saveAs)
-
-		croppedImg := cropImage(img, 50, "cropped.png")
-		resizedImg := resizeImage(croppedImg, 200, "resized.png")
-
-		clusters := createClusters(k, resizedImg)
-
-		fmt.Printf("\n%v: \n", url)
-		analyzeCluster(clusters[0], colorDefinitions)
-		analyzeCluster(clusters[1], colorDefinitions)
-		analyzeCluster(clusters[2], colorDefinitions)
-		analyzeCluster(clusters[3], colorDefinitions)
-		analyzeCluster(clusters[4], colorDefinitions)
-
-		deleteFileByLocation(saveAs)
 	}
+	writer.Flush()
+
 	elapsed := time.Since(start)
 	log.Printf("Processing %v colors from %v images took %s", numberOfColors, numberOfImages, elapsed)
 }
