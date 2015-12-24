@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/lucasb-eyer/go-colorful"
@@ -15,8 +16,8 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	// "strings"
-	"sync"
+	"strings"
+	// "sync"
 	"time"
 )
 
@@ -24,167 +25,68 @@ import (
 import _ "image/jpeg"
 import _ "image/gif"
 
-type ColorBoundary struct {
-	name          string
-	minHue        float64
-	maxHue        float64
-	minSaturation float64
-	maxSaturation float64
-	minValue      float64
-	maxValue      float64
+type ColorDefinitions struct {
+	Definitions []ColorDefinition `json:"colors"`
 }
 
-type ColorBoundaries []ColorBoundary
+type ColorDefinition struct {
+	Name string   `json:"name"`
+	Min  HSVColor `json:"min"`
+	Max  HSVColor `json:"max"`
+}
 
-func retrieveColorBoundaries() ColorBoundaries {
-	return ColorBoundaries{
-		{
-			name:          "Black",
-			minHue:        0.0,
-			maxHue:        0.0,
-			minSaturation: 0.0,
-			maxSaturation: 1.0,
-			minValue:      0.0,
-			maxValue:      0.16,
-		},
-		{
-			name:          "Brown",
-			minHue:        9.0,
-			maxHue:        45.0,
-			minSaturation: 0.857142,
-			maxSaturation: 1.0,
-			minValue:      0.3325,
-			maxValue:      0.68,
-		},
-		{
-			name:          "Blue",
-			minHue:        161.0,
-			maxHue:        255.0,
-			minSaturation: 0.5185,
-			maxSaturation: 0.5,
-			minValue:      0.27,
-			maxValue:      1.0,
-		},
-		{
-			name:          "Gold",
-			minHue:        45.0,
-			maxHue:        55.0,
-			minSaturation: 0.8,
-			maxSaturation: 0.69,
-			minValue:      0.81,
-			maxValue:      0.99,
-		},
-		{
-			name:          "Gray",
-			minHue:        0.0,
-			maxHue:        0.0,
-			minSaturation: 0.0,
-			maxSaturation: 0.3,
-			minValue:      0.15,
-			maxValue:      0.24,
-		},
-		{
-			name:          "Green",
-			minHue:        64.0,
-			maxHue:        141.0,
-			minSaturation: 0.620689,
-			maxSaturation: 0.5,
-			minValue:      0.29,
-			maxValue:      1.0,
-		},
-		{
-			name:          "Orange",
-			minHue:        18.0,
-			maxHue:        38.0,
-			minSaturation: 0.823529,
-			maxSaturation: 0.5,
-			minValue:      0.34,
-			maxValue:      1.0,
-		},
-		{
-			name:          "Pink",
-			minHue:        289.0,
-			maxHue:        347.0,
-			minSaturation: 0.461538,
-			maxSaturation: 0.5,
-			minValue:      0.26,
-			maxValue:      1.0,
-		},
-		{
-			name:          "Purple",
-			minHue:        255.0,
-			maxHue:        289.0,
-			minSaturation: 0.39,
-			maxSaturation: 0.5,
-			minValue:      0.25,
-			maxValue:      1.0,
-		},
-		{
-			name:          "Red",
-			minHue:        0.0,
-			maxHue:        18.0,
-			minSaturation: 0.78,
-			maxSaturation: 0.5,
-			minValue:      0.33,
-			maxValue:      1.0,
-		},
-		{
-			name:          "Red",
-			minHue:        347.0,
-			maxHue:        360.0,
-			minSaturation: 0.78,
-			maxSaturation: 0.5,
-			minValue:      0.3,
-			maxValue:      1.0,
-		},
-		{
-			name:          "Tan",
-			minHue:        9.0,
-			maxHue:        17.0,
-			minSaturation: 0.620689,
-			maxSaturation: 0.8,
-			minValue:      0.493,
-			maxValue:      1.0,
-		},
-		{
-			name:          "White",
-			minHue:        0.0,
-			maxHue:        0.0,
-			minSaturation: 0.0,
-			maxSaturation: 0.0,
-			minValue:      0.9,
-			maxValue:      1.0,
-		},
-		{
-			name:          "Yellow",
-			minHue:        39.0,
-			maxHue:        67.0,
-			minSaturation: 0.857142,
-			maxSaturation: 0.5,
-			minValue:      0.35,
-			maxValue:      1.0,
-		},
+type HSVColor struct {
+	Hue        float64 `json:"hue"`
+	Saturation float64 `json:"saturation"`
+	Value      float64 `json:"value"`
+}
+
+func closeIfError(statement string, err error) {
+	if err != nil {
+		log.Fatal(statement, ":\n", err)
 	}
 }
 
-func downloadImageFromUrl(url string, saveAs string) {
-	response, err := http.Get(url)
-	closeIfError(err)
-	defer response.Body.Close()
+func skipIfError(err error) bool {
+	if err != nil {
+		fmt.Println(err)
+		return true
+	}
+	return false
+}
 
+func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int) float64 {
+	// https://en.wikipedia.org/wiki/Euclidean_distance#Two_dimensions
+	return math.Sqrt(math.Pow(float64(qOne-pOne), 2) + math.Pow(float64(qTwo-pTwo), 2))
+}
+
+func retrieveColorBoundaries(filename string) ColorDefinitions {
+	var colors ColorDefinitions
+	colorDefinitionFile, err := os.Open(filename)
+	jsonParser := json.NewDecoder(colorDefinitionFile)
+	err = jsonParser.Decode(&colors)
+	closeIfError("Error decoding new_colors.json", err)
+	return colors
+}
+
+func downloadImageFromUrl(url string, saveAs string) {
 	file, err := os.Create(saveAs)
-	closeIfError(err)
+	closeIfError("Error creating file to save downloaded image to", err)
+
+	response, err := http.Get(url)
+	closeIfError("Error downloading image", err)
+	defer response.Body.Close()
 
 	// dump the response body to the file
 	_, err = io.Copy(file, response.Body)
-	closeIfError(err)
+	closeIfError("Error copying download response to opened file.", err)
 
 	file.Close()
 }
 
 func deleteFileByLocation(location string) {
 	err := os.Remove(location)
-	closeIfError(err)
+	closeIfError("Error deleting file", err)
 }
 
 func openImage(filename string) (result image.Image, skip bool) {
@@ -213,7 +115,7 @@ func cropImage(img image.Image, percentage float64, filename string) image.Image
 	if len(filename) > 0 {
 		out, err := os.Create(filename)
 		err = png.Encode(out, imaging.CropCenter(img, width, height))
-		closeIfError(err)
+		closeIfError("Error encoding image as PNG", err)
 	}
 
 	return imaging.CropCenter(img, width, height)
@@ -227,10 +129,10 @@ func resizeImage(img image.Image, maxWidth int, filename string) image.Image {
 	resizedImage := imaging.Resize(img, maxWidth, height, imaging.Lanczos)
 	if len(filename) > 0 {
 		out, err := os.Create(filename)
-		closeIfError(err)
+		closeIfError("Error creating file for resized image", err)
 
 		err = png.Encode(out, resizedImage)
-		closeIfError(err)
+		closeIfError("Error encoding resized image", err)
 	}
 
 	return resizedImage
@@ -249,10 +151,10 @@ func createDebugImage(filename string, bounds image.Rectangle, clusterPoints []m
 	}
 	if len(filename) > 0 {
 		out, err := os.Create(filename)
-		closeIfError(err)
+		closeIfError("Error creating file for debug image", err)
 
 		err = png.Encode(out, debugImg)
-		closeIfError(err)
+		closeIfError("Error encoding debug image", err)
 	}
 }
 
@@ -268,8 +170,6 @@ func createClusters(numberOfClusters int, img image.Image) map[int][]color.Color
 			"Y": rand.Intn(bounds.Max.Y-bounds.Min.Y) + bounds.Min.Y,
 		}
 	}
-
-	// createDebugImage("debug.png", bounds, clusterPoints)
 
 	smallestDistanceIndex := math.MaxInt32
 	smallestDistance := math.MaxFloat64
@@ -293,13 +193,13 @@ func createClusters(numberOfClusters int, img image.Image) map[int][]color.Color
 	return clusters
 }
 
-func analyzeCluster(clusters map[int][]color.Color, cluster int, definedColors ColorBoundaries, results map[string][]string, wg sync.WaitGroup) {
+func analyzeCluster(cluster []color.Color, definedColors []ColorDefinition, results map[string][]string) {
 	redTotal := float64(0.0)
 	greenTotal := float64(0.0)
 	blueTotal := float64(0.0)
 	pixelTotal := float64(0.0)
-	for pixel := range clusters[cluster] {
-		r, g, b, _ := clusters[cluster][pixel].RGBA()
+	for pixel := range cluster {
+		r, g, b, _ := cluster[pixel].RGBA()
 
 		redTotal += float64(r >> 8)
 		greenTotal += float64(g >> 8)
@@ -312,63 +212,56 @@ func analyzeCluster(clusters map[int][]color.Color, cluster int, definedColors C
 	for _, color := range definedColors {
 		h, s, v := finalColor.Hsv()
 
-		if color.minHue <= h && h <= color.maxHue && color.minValue <= v && v <= color.maxValue {
-			if color.minSaturation < color.maxSaturation {
-				if color.minSaturation <= s && s <= color.maxSaturation {
-					namedResults = append(namedResults, color.name)
+		if color.Min.Hue <= h && h <= color.Max.Hue && color.Min.Value <= v && v <= color.Max.Value {
+			if color.Min.Saturation < color.Max.Saturation {
+				if color.Min.Saturation <= s && s <= color.Max.Saturation {
+					namedResults = append(namedResults, color.Name)
 				}
 			} else {
-				if color.minSaturation >= s && s >= color.maxSaturation {
-					namedResults = append(namedResults, color.name)
+				if color.Min.Saturation >= s && s >= color.Max.Saturation {
+					namedResults = append(namedResults, color.Name)
 				}
 			}
 		}
 	}
 
 	results[finalColor.Hex()] = namedResults
-	wg.Done()
 }
 
-func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int) float64 {
-	// https://en.wikipedia.org/wiki/Euclidean_distance#Two_dimensions
-	return math.Sqrt(math.Pow(float64(qOne-pOne), 2) + math.Pow(float64(qTwo-pTwo), 2))
-}
-
-func skipIfError(err error) bool {
-	if err != nil {
-		fmt.Println(err)
-		return true
+func buildRow(results map[string][]string) []string {
+	returnSlice := []string{""}
+	for hex, names := range results {
+		returnSlice = append(returnSlice, hex)
+		returnSlice = append(returnSlice, strings.Join(names, ","))
 	}
-	return false
-}
-
-func closeIfError(err error) {
-	if err != nil {
-		fmt.Println(err)
-		log.Fatal(err)
-	}
+	return returnSlice
 }
 
 func main() {
 	start := time.Now()
 	rand.Seed(time.Now().Unix())
+
+	// filenames
 	saveAs := "sample.png"
-	k := 1
+	croppedFilename := "cropped.png"
+	resizedFilename := "resized.png"
+
+	k := 5
 	numberOfImages := 0
 	numberOfColors := 0
 
-	colorDefinitions := retrieveColorBoundaries()
+	colorDefinitions := retrieveColorBoundaries("colordefs.json")
 
 	csvfile, err := os.Create("slt_output.csv")
-	closeIfError(err)
+	closeIfError("Error creating output CSV file", err)
 
 	sourceFile, err := os.Open("skusandimages.csv")
-	closeIfError(err)
+	closeIfError("Error opening input file", err)
 
 	writer := csv.NewWriter(csvfile)
 	reader := csv.NewReader(sourceFile)
 	lines, err := reader.ReadAll()
-	closeIfError(err)
+	closeIfError("Error reading input CSV", err)
 	err = writer.Write([]string{
 		"SKU",
 		"imageUrl",
@@ -383,64 +276,67 @@ func main() {
 		"Gen. Color 4",
 		"Matches for 4",
 	})
-	closeIfError(err)
+	closeIfError("Error writing headers", err)
 
 	for lineNumber, line := range lines {
 		if lineNumber == 0 {
-			// skip headers
-		}
-		// } else if lineNumber < 1000 {
-		// sku := line[0]
-		imageUrl := line[1]
+			/* skip headers */
+		} else if lineNumber < 15 {
 
-		downloadImageFromUrl(imageUrl, saveAs)
-		img, shouldSkip := openImage(saveAs)
+			// Row indices.
+			imageIndex := 1
+			skuIndex := 0
 
-		if !shouldSkip {
-			croppedImg := cropImage(img, 50, "cropped.png")
-			resizedImg := resizeImage(croppedImg, 200, "resized.png")
-			clusters := createClusters(k, resizedImg)
-			results := make(map[string][]string, k)
+			sku := line[skuIndex]
+			imageUrl := line[imageIndex]
 
-			var wg sync.WaitGroup
-			wg.Add(k)
+			downloadImageFromUrl(imageUrl, saveAs)
+			img, shouldSkip := openImage(saveAs)
 
-			go analyzeCluster(clusters, 0, colorDefinitions, results, wg)
-			go analyzeCluster(clusters, 1, colorDefinitions, results, wg)
-			go analyzeCluster(clusters, 2, colorDefinitions, results, wg)
-			go analyzeCluster(clusters, 3, colorDefinitions, results, wg)
-			go analyzeCluster(clusters, 4, colorDefinitions, results, wg)
+			if !shouldSkip {
+				croppedImg := cropImage(img, 50, croppedFilename)
+				resizedImg := resizeImage(croppedImg, 200, resizedFilename)
+				clusters := createClusters(k, resizedImg)
+				results := make(map[string][]string, k)
 
-			wg.Wait()
-			fmt.Println(results)
+				analyzeCluster(clusters[0], colorDefinitions.Definitions, results)
+				analyzeCluster(clusters[1], colorDefinitions.Definitions, results)
+				analyzeCluster(clusters[2], colorDefinitions.Definitions, results)
+				analyzeCluster(clusters[3], colorDefinitions.Definitions, results)
+				analyzeCluster(clusters[4], colorDefinitions.Definitions, results)
 
-			// // err := writer.Write([]string{
-			// 	sku,
-			// 	imageUrl,
-			// 	color0,
-			// 	strings.Join(matches0, ","),
-			// 	color1,
-			// 	strings.Join(matches1, ","),
-			// 	color2,
-			// 	strings.Join(matches2, ","),
-			// 	color3,
-			// 	strings.Join(matches3, ","),
-			// 	color4,
-			// 	strings.Join(matches4, ","),
-			// })
-			// closeIfError(err)
+				// fmt.Println(results)
+				newRow := []string{sku, imageUrl}
+				newRow = append(newRow, buildRow(results)...)
+				err = writer.Write(newRow)
+				// 	sku,
+				// 	imageUrl,
+				// 	color0,
+				// 	strings.Join(results[0], ","),
+				// 	color1,
+				// 	strings.Join(results[1], ","),
+				// 	color2,
+				// 	strings.Join(results[2], ","),
+				// 	color3,
+				// 	strings.Join(results[3], ","),
+				// 	color4,
+				// 	strings.Join(results[4], ","),
+				// })
+				// closeIfError("Error writing results as CSV row", err)
 
-			deleteFileByLocation(saveAs)
-			numberOfImages += 1
-			numberOfColors += k
-		} else {
-			err := writer.Write([]string{
-				"",
-			})
-			closeIfError(err)
+				deleteFileByLocation(saveAs)
+				numberOfImages += 1
+				numberOfColors += k
+			} // else {
+			// err = writer.Write([]string{""})
+			// closeIfError("Error writing blank line", err)
+			//	}
 		}
 	}
 	writer.Flush()
+
+	deleteFileByLocation(croppedFilename)
+	deleteFileByLocation(resizedFilename)
 
 	elapsed := time.Since(start)
 	log.Printf("Processing %v colors from %v images took %s", numberOfColors, numberOfImages, elapsed)
