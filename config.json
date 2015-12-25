@@ -1,4 +1,7 @@
 {
+  "k": 5,
+  "input_filename": "skusandimages.csv",
+  "output_filename": "output.csv",
   "colors": [
     {
       "name": "Black",

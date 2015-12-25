@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"github.com/disintegration/imaging"
@@ -15,6 +16,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	// "sync"
 	"time"
@@ -24,8 +26,11 @@ import (
 import _ "image/jpeg"
 import _ "image/gif"
 
-type ColorDefinitions struct {
-	Definitions []ColorDefinition `json:"colors"`
+type Configuration struct {
+	K                int               `json:"k"`
+	InputFilename    string            `json:"input_filename"`
+	OutputFilename   string            `json:"output_filename"`
+	ColorDefinitions []ColorDefinition `json:"colors"`
 }
 
 type ColorDefinition struct {
@@ -59,13 +64,13 @@ func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int) float64 {
 	return math.Sqrt(math.Pow(float64(qOne-pOne), 2) + math.Pow(float64(qTwo-pTwo), 2))
 }
 
-func retrieveColorBoundaries(filename string) ColorDefinitions {
-	var colors ColorDefinitions
+func retrieveConfiguration(filename string) Configuration {
+	var config Configuration
 	colorDefinitionFile, err := os.Open(filename)
 	jsonParser := json.NewDecoder(colorDefinitionFile)
-	err = jsonParser.Decode(&colors)
+	err = jsonParser.Decode(&config)
 	closeIfError("Error decoding new_colors.json", err)
-	return colors
+	return config
 }
 
 func downloadImageFromUrl(url string, saveAs string) {
@@ -243,41 +248,64 @@ func buildRow(results map[string][]string) []string {
 	return returnSlice
 }
 
-func main() {
-	start := time.Now()
-	rand.Seed(time.Now().Unix())
+func buildFilename(timeString string, iteration int) string {
+	var buffer bytes.Buffer
+	buffer.WriteString(timeString)
+	buffer.WriteString("___")
+	buffer.WriteString(strconv.Itoa(iteration))
+	buffer.WriteString(".png")
+	return buffer.String()
+}
 
-	// filenames
-	saveAs := "sample.png"
-	inputFilename := "skusandimages.csv"
-	configFilename := "colordefs.json"
-	outputFilename := "output.csv"
-	croppedFilename := "cropped.png"
-	resizedFilename := "resized.png"
-
-	// arbitrary variables
-	k := 5
-	numberOfImages := 0
-	numberOfColors := 0
-
-	colorDefinitions := retrieveColorBoundaries(configFilename)
-
-	csvfile, err := os.Create(outputFilename)
-	closeIfError("Error creating output CSV file", err)
-
+func readInputFile(inputFilename string) [][]string {
 	sourceFile, err := os.Open(inputFilename)
 	closeIfError("Error opening input file", err)
 
-	writer := csv.NewWriter(csvfile)
 	reader := csv.NewReader(sourceFile)
 	lines, err := reader.ReadAll()
 	closeIfError("Error reading input CSV", err)
+	return lines
+}
+
+func setupOutputFileWriter(outputFilename string) *csv.Writer {
+	csvfile, err := os.Create(outputFilename)
+	closeIfError("Error creating output CSV file", err)
+
+	writer := csv.NewWriter(csvfile)
 	err = writer.Write([]string{
 		"SKU", "imageUrl", "Gen. Color 0", "Matches for 0", "Gen. Color 1",
 		"Matches for 1", "Gen. Color 2", "Matches for 2", "Gen. Color 3",
 		"Matches for 3", "Gen. Color 4", "Matches for 4",
 	})
 	closeIfError("Error writing headers", err)
+	return writer
+}
+
+func main() {
+	start := time.Now()
+	timeString := strconv.FormatInt(start.UnixNano(), 10)
+	rand.Seed(time.Now().Unix())
+
+	// filenames
+	configFilename := "config.json"
+	// downloadFilename := "sample.png"
+	croppedFilename := "cropped.png"
+	resizedFilename := "resized.png"
+	downloadedImages := []string{}
+
+	// arbitrary variables
+	numberOfImages := 0
+	numberOfColors := 0
+
+	// config things
+	configuration := retrieveConfiguration(configFilename)
+	colorDefinitions := configuration.ColorDefinitions
+	inputFilename := configuration.InputFilename
+	outputFilename := configuration.OutputFilename
+	k := configuration.K
+
+	lines := readInputFile(inputFilename)
+	writer := setupOutputFileWriter(outputFilename)
 
 	for lineNumber, line := range lines {
 		if lineNumber == 0 {
@@ -291,8 +319,10 @@ func main() {
 			sku := line[skuIndex]
 			imageUrl := line[imageIndex]
 
-			downloadImageFromUrl(imageUrl, saveAs)
-			img, shouldSkip := openImage(saveAs)
+			downloadFilename := buildFilename(timeString, numberOfImages)
+			downloadedImages = append(downloadedImages, downloadFilename)
+			downloadImageFromUrl(imageUrl, downloadFilename)
+			img, shouldSkip := openImage(downloadFilename)
 
 			if !shouldSkip {
 				croppedImg := cropImage(img, 50, croppedFilename)
@@ -300,17 +330,19 @@ func main() {
 				clusters := createClusters(k, resizedImg)
 				results := make(map[string][]string, k)
 
-				analyzeCluster(clusters[0], colorDefinitions.Definitions, results)
-				analyzeCluster(clusters[1], colorDefinitions.Definitions, results)
-				analyzeCluster(clusters[2], colorDefinitions.Definitions, results)
-				analyzeCluster(clusters[3], colorDefinitions.Definitions, results)
-				analyzeCluster(clusters[4], colorDefinitions.Definitions, results)
+				analyzeCluster(clusters[0], colorDefinitions, results)
+				analyzeCluster(clusters[1], colorDefinitions, results)
+				analyzeCluster(clusters[2], colorDefinitions, results)
+				analyzeCluster(clusters[3], colorDefinitions, results)
+				analyzeCluster(clusters[4], colorDefinitions, results)
 
 				newRow := []string{sku, imageUrl}
 				newRow = append(newRow, buildRow(results)...)
-				err = writer.Write(newRow)
 
-				deleteFileByLocation(saveAs)
+				err := writer.Write(newRow)
+				closeIfError("Error occurred writing csv row", err)
+
+				deleteFileByLocation(downloadFilename)
 				numberOfImages += 1
 				numberOfColors += k
 			}
