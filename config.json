@@ -1,6 +1,6 @@
 {
   "k": 5,
-  "input_filename": "skusandimages.csv",
+  "input_filename": "sample_files/skusandimages.csv",
   "output_filename": "output.csv",
   "colors": [
     {
