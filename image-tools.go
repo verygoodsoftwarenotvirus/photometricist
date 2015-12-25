@@ -11,6 +11,10 @@ import (
 	"os"
 )
 
+// These have to be imported to avoid unknown image format errors.
+import _ "image/jpeg"
+import _ "image/gif"
+
 func downloadImageFromUrl(url string, saveAs string) {
 	file, err := os.Create(saveAs)
 	closeIfError("Error creating file to save downloaded image to", err)

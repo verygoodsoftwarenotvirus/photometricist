@@ -12,10 +12,6 @@ import (
 	// "sync"
 )
 
-// These have to be imported to avoid unknown image format errors.
-import _ "image/jpeg"
-import _ "image/gif"
-
 type Configuration struct {
 	K                int               `json:"k"`
 	InputFilename    string            `json:"input_filename"`
@@ -172,7 +168,6 @@ func main() {
 				err := writer.Write(newRow)
 				closeIfError("Error occurred writing csv row", err)
 
-				deleteFileByLocation(downloadFilename)
 				numberOfImages += 1
 				numberOfColors += k
 			}
@@ -180,6 +175,9 @@ func main() {
 	}
 	writer.Flush()
 
+	for _, file := range downloadedImages {
+		deleteFileByLocation(file)
+	}
 	deleteFileByLocation(croppedFilename)
 	deleteFileByLocation(resizedFilename)
 
