@@ -22,13 +22,32 @@ func deleteFileByLocation(location string) {
 	closeIfError("Error deleting file", err)
 }
 
-func buildFilename(timeString string, iteration int) string {
+func ensureFolderExistence(folderName string) {
+	_, err := os.Stat(folderName)
+	if os.IsNotExist(err) {
+		os.Mkdir(folderName, 0666)
+	}
+}
+
+func buildFilenames(config Configuration, iteration int) (string, string, string) {
 	var buffer bytes.Buffer
-	buffer.WriteString(timeString)
+	buffer.WriteString(config.TimeString)
 	buffer.WriteString("___")
 	buffer.WriteString(strconv.Itoa(iteration))
-	buffer.WriteString(".png")
-	return buffer.String()
+	base := buffer.String()
+
+	var download bytes.Buffer
+	var resized bytes.Buffer
+	var cropped bytes.Buffer
+
+	download.WriteString(base)
+	resized.WriteString(base)
+	cropped.WriteString(base)
+
+	download.WriteString(".png")
+	resized.WriteString("_resized.png")
+	cropped.WriteString("_cropped.png")
+	return download.String(), resized.String(), cropped.String()
 }
 
 func readInputFile(inputFilename string) [][]string {

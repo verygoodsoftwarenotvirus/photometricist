@@ -1,22 +1,28 @@
 package main
 
 import (
+	"encoding/csv"
 	"github.com/lucasb-eyer/go-colorful"
 	"image"
 	"image/color"
 	"log"
 	"math"
 	"math/rand"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strconv"
+	"sync"
 	"time"
-	// "sync"
 )
 
 type Configuration struct {
-	K                int               `json:"k"`
-	InputFilename    string            `json:"input_filename"`
-	OutputFilename   string            `json:"output_filename"`
-	ColorDefinitions []ColorDefinition `json:"colors"`
+	K                 int               `json:"k"`
+	InputFilename     string            `json:"input_filename"`
+	OutputFilename    string            `json:"output_filename"`
+	DownloadDirectory string            `json:"download_dir"`
+	ColorDefinitions  []ColorDefinition `json:"colors"`
+	TimeString        string
 }
 
 type ColorDefinition struct {
@@ -107,80 +113,94 @@ func analyzeCluster(cluster []color.Color, definedColors []ColorDefinition, resu
 	results[finalColor.Hex()] = namedResults
 }
 
+func analyzeImages(line []string, config Configuration, currentImageNumber int, writer *csv.Writer, wg sync.WaitGroup) {
+	wg.Add(1)
+	defer wg.Done()
+	// Row indices.
+	imageIndex := 1
+	skuIndex := 0
+
+	sku := line[skuIndex]
+	imageUrl := line[imageIndex]
+
+	// generate filenames and download.
+	downloadFilename, resizedFilename, croppedFilename := buildFilenames(config, currentImageNumber)
+	downloadImageFromUrl(imageUrl, downloadFilename)
+	img, shouldSkip := openImage(downloadFilename)
+
+	if !shouldSkip {
+		croppedImg := cropImage(img, 50, croppedFilename)
+		resizedImg := resizeImage(croppedImg, 200, resizedFilename)
+
+		clusters := createClusters(config.K, resizedImg)
+
+		results := make(map[string][]string, config.K)
+		for x := 0; x < config.K; x++ {
+			analyzeCluster(clusters[x], config.ColorDefinitions, results)
+		}
+
+		newRow := []string{sku, imageUrl}
+		newRow = append(newRow, buildRow(results)...)
+
+		err := writer.Write(newRow)
+		closeIfError("Error occurred writing csv row", err)
+
+		deleteFileByLocation(downloadFilename)
+		deleteFileByLocation(resizedFilename)
+		deleteFileByLocation(croppedFilename)
+
+		wg.Done()
+	} else {
+		wg.Done()
+	}
+}
+
 func main() {
+	runtime.GOMAXPROCS(2)
 	start := time.Now()
-	timeString := strconv.FormatInt(start.UnixNano(), 10)
 	rand.Seed(time.Now().Unix())
 
 	// filenames
 	configFilename := "config.json"
-	// downloadFilename := "sample.png"
-	croppedFilename := "cropped.png"
-	resizedFilename := "resized.png"
-	downloadedImages := []string{}
 
 	// arbitrary variables
 	numberOfImages := 0
-	numberOfColors := 0
 
 	// config things
 	configuration := retrieveConfiguration(configFilename)
-	colorDefinitions := configuration.ColorDefinitions
+	configuration.TimeString = strconv.FormatInt(start.UnixNano(), 10)
 	inputFilename := configuration.InputFilename
 	outputFilename := configuration.OutputFilename
-	k := configuration.K
 
+	if configuration.DownloadDirectory == "" {
+		var err error
+		configuration.DownloadDirectory, err = filepath.Abs(filepath.Dir(os.Args[0]))
+		closeIfError("Error getting current directory", err)
+	} else {
+		ensureFolderExistence(configuration.DownloadDirectory)
+	}
+	os.Chdir(configuration.DownloadDirectory)
+
+	// CSV stuff
 	lines := readInputFile(inputFilename)
 	writer := setupOutputFileWriter(outputFilename)
+
+	// concurreny stuff
+	var wg sync.WaitGroup
 
 	for lineNumber, line := range lines {
 		if lineNumber == 0 {
 			/* skip headers */
 		} else if lineNumber < 2 {
+			go analyzeImages(line, configuration, numberOfImages, writer, wg)
 
-			// Row indices.
-			imageIndex := 1
-			skuIndex := 0
-
-			sku := line[skuIndex]
-			imageUrl := line[imageIndex]
-
-			downloadFilename := buildFilename(timeString, numberOfImages)
-			downloadedImages = append(downloadedImages, downloadFilename)
-			downloadImageFromUrl(imageUrl, downloadFilename)
-			img, shouldSkip := openImage(downloadFilename)
-
-			if !shouldSkip {
-				croppedImg := cropImage(img, 50, croppedFilename)
-				resizedImg := resizeImage(croppedImg, 200, resizedFilename)
-				clusters := createClusters(k, resizedImg)
-				results := make(map[string][]string, k)
-
-				analyzeCluster(clusters[0], colorDefinitions, results)
-				analyzeCluster(clusters[1], colorDefinitions, results)
-				analyzeCluster(clusters[2], colorDefinitions, results)
-				analyzeCluster(clusters[3], colorDefinitions, results)
-				analyzeCluster(clusters[4], colorDefinitions, results)
-
-				newRow := []string{sku, imageUrl}
-				newRow = append(newRow, buildRow(results)...)
-
-				err := writer.Write(newRow)
-				closeIfError("Error occurred writing csv row", err)
-
-				numberOfImages += 1
-				numberOfColors += k
-			}
+			numberOfImages += 1
 		}
 	}
+
+	wg.Wait()
 	writer.Flush()
 
-	for _, file := range downloadedImages {
-		deleteFileByLocation(file)
-	}
-	deleteFileByLocation(croppedFilename)
-	deleteFileByLocation(resizedFilename)
-
 	elapsed := time.Since(start)
-	log.Printf("Processing %v colors from %v images took %s", numberOfColors, numberOfImages, elapsed)
+	log.Printf("Processing %v colors from %v images took %s", numberOfImages*configuration.K, numberOfImages, elapsed)
 }

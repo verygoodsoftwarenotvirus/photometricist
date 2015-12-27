@@ -2,6 +2,7 @@
   "k": 5,
   "input_filename": "sample_files/skusandimages.csv",
   "output_filename": "output.csv",
+  "download_dir": "photos",
   "colors": [
     {
       "name": "Black",
