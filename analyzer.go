@@ -1,22 +1,38 @@
 package main
 
 import (
+	"bytes"
+	"encoding/csv"
+	"encoding/json"
+	"github.com/disintegration/imaging"
 	"github.com/lucasb-eyer/go-colorful"
 	"image"
 	"image/color"
+	"image/draw"
+	"image/png"
+	"io"
 	"log"
 	"math"
 	"math/rand"
+	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
-	// "sync"
 )
 
+// These have to be imported to avoid unknown image format errors.
+import _ "image/jpeg"
+import _ "image/gif"
+
 type Configuration struct {
-	K                int               `json:"k"`
-	InputFilename    string            `json:"input_filename"`
-	OutputFilename   string            `json:"output_filename"`
-	ColorDefinitions []ColorDefinition `json:"colors"`
+	K                 int               `json:"k"`
+	InputFilename     string            `json:"input_filename"`
+	OutputFilename    string            `json:"output_filename"`
+	DownloadDirectory string            `json:"download_dir"`
+	ColorDefinitions  []ColorDefinition `json:"colors"`
+	TimeString        string
 }
 
 type ColorDefinition struct {
@@ -30,6 +46,192 @@ type HSVColor struct {
 	Saturation float64 `json:"saturation"`
 	Value      float64 `json:"value"`
 }
+
+// helper functions
+func closeIfError(statement string, err error) {
+	if err != nil {
+		log.Fatal(statement, ":\n", err)
+	}
+}
+
+func skipIfError(err error) bool {
+	if err != nil {
+		log.Println(err)
+		return true
+	}
+	return false
+}
+
+func euclidianDistance(pOne int, pTwo int, qOne int, qTwo int) float64 {
+	// https://en.wikipedia.org/wiki/Euclidean_distance#Two_dimensions
+	return math.Sqrt(math.Pow(float64(qOne-pOne), 2) + math.Pow(float64(qTwo-pTwo), 2))
+}
+
+func buildRow(results map[string][]string) []string {
+	returnSlice := []string{""}
+	for hex, names := range results {
+		returnSlice = append(returnSlice, hex)
+		returnSlice = append(returnSlice, strings.Join(names, ","))
+	}
+	return returnSlice
+}
+
+// file handling functions
+
+func retrieveConfiguration(filename string) Configuration {
+	var config Configuration
+	colorDefinitionFile, err := os.Open(filename)
+	jsonParser := json.NewDecoder(colorDefinitionFile)
+	err = jsonParser.Decode(&config)
+	closeIfError("Error decoding new_colors.json", err)
+	return config
+}
+
+func deleteFileByLocation(location string) {
+	err := os.Remove(location)
+	closeIfError("Error deleting file", err)
+}
+
+func ensureFolderExistence(folderName string) {
+	_, err := os.Stat(folderName)
+	if os.IsNotExist(err) {
+		os.Mkdir(folderName, 0666)
+	}
+}
+
+func buildFilenames(config Configuration, iteration int) (string, string, string) {
+	var buffer bytes.Buffer
+	buffer.WriteString(config.TimeString)
+	buffer.WriteString("___")
+	buffer.WriteString(strconv.Itoa(iteration))
+	base := buffer.String()
+
+	var download bytes.Buffer
+	var resized bytes.Buffer
+	var cropped bytes.Buffer
+
+	download.WriteString(base)
+	resized.WriteString(base)
+	cropped.WriteString(base)
+
+	download.WriteString(".png")
+	resized.WriteString("_resized.png")
+	cropped.WriteString("_cropped.png")
+	return download.String(), resized.String(), cropped.String()
+}
+
+func readInputFile(inputFilename string) [][]string {
+	sourceFile, err := os.Open(inputFilename)
+	closeIfError("Error opening input file", err)
+
+	reader := csv.NewReader(sourceFile)
+	lines, err := reader.ReadAll()
+	closeIfError("Error reading input CSV", err)
+	return lines
+}
+
+func setupOutputFileWriter(outputFilename string) *csv.Writer {
+	csvfile, err := os.Create(outputFilename)
+	closeIfError("Error creating output CSV file", err)
+
+	writer := csv.NewWriter(csvfile)
+	err = writer.Write([]string{
+		"SKU", "imageUrl", "Gen. Color 0", "Matches for 0", "Gen. Color 1",
+		"Matches for 1", "Gen. Color 2", "Matches for 2", "Gen. Color 3",
+		"Matches for 3", "Gen. Color 4", "Matches for 4",
+	})
+	closeIfError("Error writing headers", err)
+	return writer
+}
+
+func downloadImageFromUrl(url string, saveAs string) {
+	file, err := os.Create(saveAs)
+	closeIfError("Error creating file to save downloaded image to", err)
+
+	response, err := http.Get(url)
+	closeIfError("Error downloading image", err)
+	defer response.Body.Close()
+
+	// dump the response body to the file
+	_, err = io.Copy(file, response.Body)
+	closeIfError("Error copying download response to opened file.", err)
+
+	file.Close()
+}
+
+func openImage(filename string) (result image.Image, skip bool) {
+	imgfile, err := os.Open(filename)
+	shouldSkip := skipIfError(err)
+	if shouldSkip {
+		return nil, true
+	}
+
+	defer imgfile.Close()
+
+	img, _, err := image.Decode(imgfile)
+	shouldSkip = skipIfError(err)
+	if shouldSkip {
+		return nil, true
+	}
+
+	return img, false
+}
+
+// image handling functions
+
+func cropImage(img image.Image, percentage float64, filename string) image.Image {
+	bounds := img.Bounds()
+	width := int(float64(bounds.Max.X) * (percentage * .01))
+	height := int(float64(bounds.Max.Y) * (percentage * .01))
+
+	if len(filename) > 0 {
+		out, err := os.Create(filename)
+		err = png.Encode(out, imaging.CropCenter(img, width, height))
+		closeIfError("Error encoding image as PNG", err)
+	}
+
+	return imaging.CropCenter(img, width, height)
+}
+
+func resizeImage(img image.Image, maxWidth int, filename string) image.Image {
+	bounds := img.Bounds()
+	modifier := float64(maxWidth) / float64(bounds.Max.X)
+	height := int(float64(bounds.Max.Y) * modifier)
+
+	resizedImage := imaging.Resize(img, maxWidth, height, imaging.Lanczos)
+	if len(filename) > 0 {
+		out, err := os.Create(filename)
+		closeIfError("Error creating file for resized image", err)
+
+		err = png.Encode(out, resizedImage)
+		closeIfError("Error encoding resized image", err)
+	}
+	return resizedImage
+}
+
+func createDebugImage(filename string, bounds image.Rectangle, clusterPoints []map[string]int) {
+	debugImgOutline := image.Rect(0, 0, bounds.Max.X, bounds.Max.Y)
+	debugImg := image.NewRGBA(debugImgOutline)
+	draw.Draw(debugImg, debugImg.Bounds(), &image.Uniform{color.Transparent}, image.ZP, draw.Src)
+
+	for _, point := range clusterPoints {
+		// magic numbers ahoy!
+		debugPointOutline := image.Rect(point["X"], point["Y"], point["X"]+5, point["Y"]+5)
+		debugPoint := image.Rect(point["X"]+1, point["Y"]+1, point["X"]+4, point["Y"]+4)
+		basePoint := image.Point{X: point["X"], Y: point["Y"]}
+		draw.Draw(debugImg, debugPointOutline, &image.Uniform{color.White}, basePoint, draw.Src)
+		draw.Draw(debugImg, debugPoint, &image.Uniform{color.Black}, basePoint, draw.Src)
+	}
+	if len(filename) > 0 {
+		out, err := os.Create(filename)
+		closeIfError("Error creating file for debug image", err)
+
+		err = png.Encode(out, debugImg)
+		closeIfError("Error encoding debug image", err)
+	}
+}
+
+// analysis functions
 
 func createClusters(numberOfClusters int, img image.Image) map[int][]color.Color {
 	clusters := make(map[int][]color.Color, numberOfClusters)
@@ -107,29 +309,68 @@ func analyzeCluster(cluster []color.Color, definedColors []ColorDefinition, resu
 	results[finalColor.Hex()] = namedResults
 }
 
+func analyzeImages(line []string, config Configuration, currentImageNumber int, writer *csv.Writer) {
+	// Row indices.
+	imageIndex := 1
+	skuIndex := 0
+
+	sku := line[skuIndex]
+	imageUrl := line[imageIndex]
+
+	// generate filenames and download.
+	downloadFilename, resizedFilename, croppedFilename := buildFilenames(config, currentImageNumber)
+	downloadImageFromUrl(imageUrl, downloadFilename)
+	img, shouldSkip := openImage(downloadFilename)
+
+	if !shouldSkip {
+		croppedImg := cropImage(img, 50, croppedFilename)
+		resizedImg := resizeImage(croppedImg, 200, resizedFilename)
+
+		clusters := createClusters(config.K, resizedImg)
+
+		results := make(map[string][]string, config.K)
+		for x := 0; x < config.K; x++ {
+			analyzeCluster(clusters[x], config.ColorDefinitions, results)
+		}
+
+		newRow := []string{sku, imageUrl}
+		newRow = append(newRow, buildRow(results)...)
+
+		err := writer.Write(newRow)
+		closeIfError("Error occurred writing csv row", err)
+
+		deleteFileByLocation(downloadFilename)
+		deleteFileByLocation(resizedFilename)
+		deleteFileByLocation(croppedFilename)
+	}
+}
+
 func main() {
 	start := time.Now()
-	timeString := strconv.FormatInt(start.UnixNano(), 10)
 	rand.Seed(time.Now().Unix())
 
 	// filenames
 	configFilename := "config.json"
-	// downloadFilename := "sample.png"
-	croppedFilename := "cropped.png"
-	resizedFilename := "resized.png"
-	downloadedImages := []string{}
 
 	// arbitrary variables
 	numberOfImages := 0
-	numberOfColors := 0
 
 	// config things
 	configuration := retrieveConfiguration(configFilename)
-	colorDefinitions := configuration.ColorDefinitions
+	configuration.TimeString = strconv.FormatInt(start.UnixNano(), 10)
 	inputFilename := configuration.InputFilename
 	outputFilename := configuration.OutputFilename
-	k := configuration.K
 
+	if configuration.DownloadDirectory == "" {
+		var err error
+		configuration.DownloadDirectory, err = filepath.Abs(filepath.Dir(os.Args[0]))
+		closeIfError("Error getting current directory", err)
+	} else {
+		ensureFolderExistence(configuration.DownloadDirectory)
+	}
+	os.Chdir(configuration.DownloadDirectory)
+
+	// CSV stuff
 	lines := readInputFile(inputFilename)
 	writer := setupOutputFileWriter(outputFilename)
 
@@ -137,50 +378,14 @@ func main() {
 		if lineNumber == 0 {
 			/* skip headers */
 		} else if lineNumber < 2 {
+			analyzeImages(line, configuration, numberOfImages, writer)
 
-			// Row indices.
-			imageIndex := 1
-			skuIndex := 0
-
-			sku := line[skuIndex]
-			imageUrl := line[imageIndex]
-
-			downloadFilename := buildFilename(timeString, numberOfImages)
-			downloadedImages = append(downloadedImages, downloadFilename)
-			downloadImageFromUrl(imageUrl, downloadFilename)
-			img, shouldSkip := openImage(downloadFilename)
-
-			if !shouldSkip {
-				croppedImg := cropImage(img, 50, croppedFilename)
-				resizedImg := resizeImage(croppedImg, 200, resizedFilename)
-				clusters := createClusters(k, resizedImg)
-				results := make(map[string][]string, k)
-
-				analyzeCluster(clusters[0], colorDefinitions, results)
-				analyzeCluster(clusters[1], colorDefinitions, results)
-				analyzeCluster(clusters[2], colorDefinitions, results)
-				analyzeCluster(clusters[3], colorDefinitions, results)
-				analyzeCluster(clusters[4], colorDefinitions, results)
-
-				newRow := []string{sku, imageUrl}
-				newRow = append(newRow, buildRow(results)...)
-
-				err := writer.Write(newRow)
-				closeIfError("Error occurred writing csv row", err)
-
-				numberOfImages += 1
-				numberOfColors += k
-			}
+			numberOfImages += 1
 		}
 	}
+
 	writer.Flush()
 
-	for _, file := range downloadedImages {
-		deleteFileByLocation(file)
-	}
-	deleteFileByLocation(croppedFilename)
-	deleteFileByLocation(resizedFilename)
-
 	elapsed := time.Since(start)
-	log.Printf("Processing %v colors from %v images took %s", numberOfColors, numberOfImages, elapsed)
+	log.Printf("Processing %v colors from %v images took %s", numberOfImages*configuration.K, numberOfImages, elapsed)
 }
