@@ -345,7 +345,7 @@ func analyzeImages(line []string, config Configuration, currentImageNumber int, 
 	}
 }
 
-func main() {
+func analyzeColors() {
 	start := time.Now()
 	rand.Seed(time.Now().Unix())
 
