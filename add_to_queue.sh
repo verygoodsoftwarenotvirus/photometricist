@@ -1,0 +1,1 @@
+redis-cli -h "192.168.59.103" RPUSH resque:queue:go-worker '{"class":"ColorAnalysis","args":[{"task_id": "4", "output_file": "test_output.csv"}]}'

@@ -1,1 +1,1 @@
-go run worker.go -queues="go-*" -uri="redis://192.168.59.103:6379"
+go run jobprocessor.go -queues="go-worker" -uri="redis://192.168.59.103:6379" -use-number
